@@ -11,7 +11,12 @@ import net.momirealms.customfishing.api.mechanic.game.GameBasics;
 import net.momirealms.customfishing.api.mechanic.game.GameSetting;
 import net.momirealms.customfishing.api.mechanic.misc.value.MathValue;
 import net.momirealms.customfishing.libraries.boostedyaml.block.implementation.Section;
+import org.bukkit.Input;
+import org.bukkit.NamespacedKey;
 import org.bukkit.SoundCategory;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
@@ -24,7 +29,8 @@ import java.util.function.BiFunction;
  * Dance-Dance-Revolution style fishing game. Arrows scroll right-to-left into a
  * target box; press the matching key as each one lands.
  *
- * Inputs: left = attack (left click), down = sneak, up = swap hands (F), right = use (right click).
+ * Inputs ("controls"): wasd (default) = the movement keys, W up / A left / S down / D right, with
+ * walking frozen for the duration; mouse = left click / sneak / F / right click; or both.
  *
  * Default visuals use only vanilla font glyphs. Every track cell is exactly 12px wide
  * (vanilla widths: '←'/'→' 8px, '↑'/'↓' 6px, space 4px, '·' 2px, bold adds 1px), so the
@@ -36,6 +42,7 @@ public class DDRGame extends AbstractGame {
     static final int LEFT = 0, DOWN = 1, UP = 2, RIGHT = 3;
     private static final String[] DIR_NAMES = {"left", "down", "up", "right"};
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final NamespacedKey FREEZE_KEY = NamespacedKey.fromString("cfddr:freeze");
 
     // chart
     private final int notesMin, notesMax;
@@ -50,6 +57,8 @@ public class DDRGame extends AbstractGame {
     private final boolean pingCompensation;
     private final long maxPingCompMs;
     private final long phantomClickMs;
+    // controls
+    private final boolean wasdControls, mouseControls, freezeMovement;
     // display
     private final boolean trackInTitle;
     private final String[] cells = new String[4];
@@ -91,6 +100,11 @@ public class DDRGame extends AbstractGame {
         maxPingCompMs = seconds(section.getDouble("arguments.max-ping-compensation", 0.25));
         phantomClickMs = seconds(section.getDouble("arguments.phantom-click-filter", 0.1));
 
+        String controls = section.getString("controls", "wasd").toLowerCase();
+        wasdControls = !controls.equals("mouse");
+        mouseControls = !controls.equals("wasd");
+        freezeMovement = wasdControls && section.getBoolean("freeze-movement", true);
+
         trackInTitle = !"subtitle".equalsIgnoreCase(section.getString("display", "title"));
         String[] defaultColors = {"#c77dff", "#4cc9f0", "#80ed99", "#ff6b6b"};
         for (int d = 0; d < 4; d++) {
@@ -116,9 +130,11 @@ public class DDRGame extends AbstractGame {
         statusFormat = section.getString("status", "{judgement}  <gray>combo <white>{combo}</white>  {lives}");
         lifeFull = section.getString("text.life", "<red>❤");
         lifeEmpty = section.getString("text.life-lost", "<dark_gray>❤");
-        tip = section.getString("tip",
-                "<color:#c77dff>← <key:key.attack></color>  <color:#4cc9f0>↓ <key:key.sneak></color>  " +
-                "<color:#80ed99>↑ <key:key.swapOffhand></color>  <color:#ff6b6b>→ <key:key.use></color>");
+        tip = section.getString("tip", wasdControls
+                ? "<color:#c77dff>← <key:key.left></color>  <color:#4cc9f0>↓ <key:key.back></color>  " +
+                  "<color:#80ed99>↑ <key:key.forward></color>  <color:#ff6b6b>→ <key:key.right></color>"
+                : "<color:#c77dff>← <key:key.attack></color>  <color:#4cc9f0>↓ <key:key.sneak></color>  " +
+                  "<color:#80ed99>↑ <key:key.swapOffhand></color>  <color:#ff6b6b>→ <key:key.use></color>");
         soundPerfect = section.getString("sound.perfect", "minecraft:block.note_block.bell");
         soundGood = section.getString("sound.good", "minecraft:block.note_block.hat");
         soundMiss = section.getString("sound.miss", "minecraft:block.note_block.bass");
@@ -156,7 +172,7 @@ public class DDRGame extends AbstractGame {
 
     private enum Judgement { NONE, READY, PERFECT, GOOD, MISS }
 
-    private final class DDRPlayer extends AbstractGamingPlayer {
+    private final class DDRPlayer extends AbstractGamingPlayer implements DDRInputListener.InputSink {
 
         // not initialised in declarations: the super constructor schedules tick() before they would run
         private volatile boolean ready;
@@ -169,6 +185,8 @@ public class DDRGame extends AbstractGame {
         private int flashDir;
         private long flashAt;
         private boolean finished;
+        private Input lastInput;
+        private boolean frozen;
 
         DDRPlayer(CustomFishingHook hook, GameSetting setting) {
             super(hook, setting);
@@ -205,7 +223,55 @@ public class DDRGame extends AbstractGame {
             judgementAt = now;
             flashDir = -1;
             lastRightClick = now; // the reel-in click that started the game also sends a swing
+
+            if (wasdControls) {
+                Player player = getPlayer();
+                lastInput = player.getCurrentInput();
+                DDRInputListener.ensureRegistered();
+                DDRInputListener.ACTIVE.put(player.getUniqueId(), this);
+                if (freezeMovement) {
+                    BukkitCustomFishingPlugin.getInstance().getScheduler().sync().run(this::freeze, player.getLocation());
+                }
+            }
             ready = true;
+        }
+
+        @Override
+        public void destroy() {
+            super.destroy();
+            if (!wasdControls) return;
+            Player player = getPlayer();
+            DDRInputListener.ACTIVE.remove(player.getUniqueId(), this);
+            if (freezeMovement) {
+                BukkitCustomFishingPlugin.getInstance().getScheduler().sync().run(this::unfreeze, player.getLocation());
+            }
+        }
+
+        // transient modifier: never saved with the player, so a crash can't leave anyone stuck
+        private synchronized void freeze() {
+            if (!isValid() || frozen) return;
+            AttributeInstance speed = getPlayer().getAttribute(Attribute.MOVEMENT_SPEED);
+            if (speed == null) return;
+            speed.removeModifier(FREEZE_KEY);
+            speed.addTransientModifier(new AttributeModifier(FREEZE_KEY, -1, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            frozen = true;
+        }
+
+        private synchronized void unfreeze() {
+            AttributeInstance speed = getPlayer().getAttribute(Attribute.MOVEMENT_SPEED);
+            if (speed != null) speed.removeModifier(FREEZE_KEY);
+            frozen = false;
+        }
+
+        @Override
+        public void onInput(Input input) {
+            Input prev = lastInput;
+            lastInput = input;
+            // only key-down edges count; holding a key doesn't repeat
+            if (input.isForward() && (prev == null || !prev.isForward())) press(UP);
+            if (input.isBackward() && (prev == null || !prev.isBackward())) press(DOWN);
+            if (input.isLeft() && (prev == null || !prev.isLeft())) press(LEFT);
+            if (input.isRight() && (prev == null || !prev.isRight())) press(RIGHT);
         }
 
         private long pingComp() {
@@ -232,23 +298,25 @@ public class DDRGame extends AbstractGame {
 
         @Override
         public boolean handleLeftClick() {
+            if (!mouseControls) return false;
             press(LEFT);
             return true;
         }
 
         @Override
         public void handleRightClick() {
-            press(RIGHT);
+            // never end the game early on reel-in (the default behaviour)
+            if (mouseControls) press(RIGHT);
         }
 
         @Override
         public void handleSwapHand() {
-            press(UP);
+            if (mouseControls) press(UP);
         }
 
         @Override
         public boolean handleSneak() {
-            press(DOWN);
+            if (mouseControls) press(DOWN);
             return false;
         }
 
@@ -313,7 +381,11 @@ public class DDRGame extends AbstractGame {
             }
             advancePending();
             if (checkEnd()) return;
-            render(now, 300);
+            try {
+                render(now, 300);
+            } catch (RuntimeException e) {
+                BukkitCustomFishingPlugin.getInstance().getPluginLogger().warn("[DDR] render failed", e);
+            }
         }
 
         private void miss(long now) {
@@ -367,8 +439,8 @@ public class DDRGame extends AbstractGame {
                 Note n = notes.get(i);
                 if (n.state != 0) continue;
                 double pos = (n.time - now) / cellMs;
-                if (pos > lanes - 0.5) break;
-                int cell = (int) Math.max(0, Math.round(pos));
+                if (pos >= lanes - 0.5) break;
+                int cell = (int) Math.min(lanes - 1, Math.max(0, Math.round(pos)));
                 if (occupant[cell] == null) occupant[cell] = n;
             }
 
