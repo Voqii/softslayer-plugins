@@ -3,7 +3,7 @@
 A Dance-Dance-Revolution style minigame (`game-type: ddr`) for XiaoMoMi's CustomFishing,
 built as a minigame expansion — no CustomFishing fork.
 
-Controls: `←` left click · `↓` sneak · `↑` swap hands (F) · `→` right click.
+Controls (default `controls: wasd`): W ↑ · A ← · S ↓ · D →, walking frozen during the game. `controls: mouse` = left click ← · sneak ↓ · F ↑ · right click →; `both` = either.
 
 - `./build.sh` → `build/CustomFishing-DDR-1.0.0.jar` (JDK 25 container; compiles against
   `~/cf-ddr/cf-src/target/CustomFishing-2.3.28.jar` and `~/minecraft/data/libraries`).
