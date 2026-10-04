@@ -1,16 +1,20 @@
 CustomFishing DDR minigame — install
 
-1. CustomFishing-2.3.28.jar      -> plugins/   (replaces CustomFishing-2.3.26.jar — 2.3.26 does NOT
-                                               start on MC 26.3; 2.3.28 is built from upstream source)
-2. CustomFishing-DDR-1.0.2.jar   -> plugins/CustomFishing/expansions/minigame/
-3. ddr.yml                       -> plugins/CustomFishing/contents/minigame/ddr.yml
-4. Append the contents of game-conditions-ddr.yml to the end of plugins/CustomFishing/game-conditions.yml
-5. Restart the server (or /cfishing reload if CustomFishing 2.3.28 is already running).
-   Log should show: "Loaded minigame expansion: ddr[1.0.2] by voqii"
+Add-on for CustomFishing (2.3.26 or newer). Nothing here replaces or edits CustomFishing itself,
+its existing configs, or any resource pack — it only adds files plus one appended block.
+
+1. CustomFishing-DDR-1.0.2.jar   -> plugins/CustomFishing/expansions/minigame/   (new file)
+2. ddr.yml                       -> plugins/CustomFishing/contents/minigame/ddr.yml   (new file)
+3. Add the block in game-conditions-ddr.yml to the END of plugins/CustomFishing/game-conditions.yml
+   (append only — existing entries stay as they are). Skip this step and DDR is installed but never
+   picked; this is what puts it into the rotation.
+4. /cfishing reload (or restart). Log should show: "Loaded minigame expansion: ddr[1.0.2] by voqii"
 
 Controls: W up, A left, S down, D right (movement keys; walking is frozen during the game).
 Tuning lives in ddr.yml (difficulty, note count, speed, timing windows, lives). DDR weights are in the
-ddr_games block of game-conditions.yml (easy +15 / normal +5 in any water, harder for silver/golden fish).
-No resource pack needed.
+ddr_games block (easy +15 / normal +5 in any water, harder for silver/golden fish); raise or lower
+those numbers to change how often it shows up versus the existing games.
+No resource pack needed — uses vanilla font characters only.
 
+Note: CustomFishing 2.3.26 does not start on Minecraft 26.3 (needs 2.3.28+ from the developer).
 When updating the expansion later, delete the old jar and use the new filename (don't overwrite in place).
