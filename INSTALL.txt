@@ -1,0 +1,16 @@
+CustomFishing DDR minigame — install
+
+1. CustomFishing-2.3.28.jar      -> plugins/   (replaces CustomFishing-2.3.26.jar — 2.3.26 does NOT
+                                               start on MC 26.3; 2.3.28 is built from upstream source)
+2. CustomFishing-DDR-1.0.2.jar   -> plugins/CustomFishing/expansions/minigame/
+3. ddr.yml                       -> plugins/CustomFishing/contents/minigame/ddr.yml
+4. Append the contents of game-conditions-ddr.yml to the end of plugins/CustomFishing/game-conditions.yml
+5. Restart the server (or /cfishing reload if CustomFishing 2.3.28 is already running).
+   Log should show: "Loaded minigame expansion: ddr[1.0.2] by voqii"
+
+Controls: W up, A left, S down, D right (movement keys; walking is frozen during the game).
+Tuning lives in ddr.yml (difficulty, note count, speed, timing windows, lives). DDR weights are in the
+ddr_games block of game-conditions.yml (easy +15 / normal +5 in any water, harder for silver/golden fish).
+No resource pack needed.
+
+When updating the expansion later, delete the old jar and use the new filename (don't overwrite in place).
