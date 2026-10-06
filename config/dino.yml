@@ -2,10 +2,11 @@
 # Goes in plugins/CustomFishing/contents/minigame/dino.yml
 #
 # A board floats over the water in front of the player (only they see it). Obstacles scroll
-# right-to-left towards the runner:
-#   🌵 cactus      -> jump
-#   🐦 low bird    -> jump or duck
-#   🦅 high bird   -> (top row) don't jump into it
+# right-to-left towards the runner across three height rows:
+#   sky     🌥 clouds (scenery) + 🦅 high birds -> only the top of a jump reaches the sky; don't mistime it
+#   head    🐦 birds at head height             -> duck under (or clear them at the very top of a jump)
+#   ground  🌵 cacti                            -> jump
+# A jump arcs ground -> head -> sky -> head -> ground (apex-share = fraction of the jump spent in the sky).
 # Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
 # Walking (and real jumping) is frozen while the game runs.
 # Clear every obstacle before running out of lives to land the fish.
@@ -18,7 +19,9 @@
 #   min-gap / max-gap      seconds between obstacles (never less than jump-time + 0.3)
 #   gap-tighten            how much difficulty 100 shrinks the gaps (0.25 = 25%)
 #   bird-chance            chance an obstacle is a bird (after the first birds-after obstacles)
-#   high-bird-share        of the birds, the share that fly high
+#   high-bird-share        of the birds, the share that fly high (sky row) instead of at head height
+#   apex-share             fraction of a jump spent at the top (sky row)
+#   cloud-speed / cloud-chance   cloud drift (fraction of course speed) / per-tick spawn chance
 #   double-cactus-chance   chance of two cacti back to back (one jump clears both)
 #   jump-time              seconds in the air per jump
 #   hitbox                 half-width of an obstacle in cells (smaller = more forgiving)
@@ -42,11 +45,12 @@ dino_easy:
     min-gap: 1.1
     max-gap: 1.8
     gap-tighten: 0.2
-    bird-chance: 0.2
-    high-bird-share: 0.5
+    bird-chance: 0.3
+    high-bird-share: 0.3
     double-cactus-chance: 0.0
     birds-after: 4
-    jump-time: 0.65
+    jump-time: 0.7
+    apex-share: 0.4
     hitbox: 0.3
     lives: 3
     invulnerable-time: 1.0
@@ -67,11 +71,12 @@ dino_normal:
     min-gap: 0.9
     max-gap: 1.5
     gap-tighten: 0.25
-    bird-chance: 0.3
-    high-bird-share: 0.5
+    bird-chance: 0.35
+    high-bird-share: 0.3
     double-cactus-chance: 0.15
     birds-after: 3
-    jump-time: 0.6
+    jump-time: 0.65
+    apex-share: 0.4
     hitbox: 0.35
     lives: 2
     invulnerable-time: 1.0
@@ -92,11 +97,14 @@ dino_hard:
     min-gap: 0.8
     max-gap: 1.3
     gap-tighten: 0.25
-    bird-chance: 0.4
-    high-bird-share: 0.5
+    bird-chance: 0.45
+    high-bird-share: 0.35
     double-cactus-chance: 0.25
     birds-after: 2
-    jump-time: 0.55
+    jump-time: 0.6
+    apex-share: 0.4
+    cloud-speed: 0.35
+    cloud-chance: 0.04
     hitbox: 0.35
     lives: 1
     invulnerable-time: 1.0
@@ -114,14 +122,16 @@ dino_hard:
     runner: '🦖'
     duck: '🦎'
     cactus: '🌵'
-    low-bird: '🐦'
+    bird: '🐦'
     high-bird: '🦅'
+    cloud: '🌥'
   colors:
     runner: '#e0e0e0'
     duck: '#e0e0e0'
     cactus: '#6fcf6f'
-    low-bird: '#e0b070'
+    bird: '#e0b070'
     high-bird: '#d08060'
+    cloud: '#6c7a96'
     ground: '#8a8a8a'
     hit: '#ff4040'
   text:
