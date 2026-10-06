@@ -6,8 +6,9 @@
 #   sky     🌥 clouds (scenery) + 🦅 high birds -> don't jump into them
 #   head    🐦 birds at head height             -> duck under
 #   ground  🌵 cacti                            -> jump
-# The dino is two rows tall (🦖 over ∏ legs): standing = head + ground, jumping = sky + head,
-# ducking = 🦎 on the ground only. You're hit when an obstacle is in a row you occupy.
+# The dino is drawn big (runner-scale, default 2.5x) so it covers the head + ground rows; jumping
+# lifts it one row (sky + head, smoothly animated); ducking shrinks it to a 1x 🦎 on the ground only.
+# You're hit when an obstacle is in a row the dino covers.
 # Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
 # Walking (and real jumping) is frozen while the game runs.
 # Clear every obstacle before running out of lives to land the fish.
@@ -24,6 +25,7 @@
 #   cloud-speed / cloud-chance   cloud drift (fraction of course speed) / per-tick spawn chance
 #   double-cactus-chance   chance of two cacti back to back (one jump clears both)
 #   jump-time              seconds in the air per jump
+#   jump-rise              fraction of the jump spent rising (and falling) — the rest is hang time
 #   hitbox                 half-width of an obstacle in cells (smaller = more forgiving)
 #   invulnerable-time      seconds of grace after a hit
 #   ping-compensation      judge in the player's time (shifted by ping, capped)
@@ -113,6 +115,9 @@ dino_hard:
     distance: 3.5          # blocks in front of the player's eyes
     height-offset: 0.4
     scale: 0.6
+    runner-scale: 2.5      # standing/jumping dino size vs the board (ducking is always 1x)
+    runner-offset-x: 0     # nudge the dino over its column, in board pixels
+    runner-offset-y: 0     # nudge the dino onto the ground line, in board pixels
     background: '#000000'
     background-alpha: 150
   glyphs:
@@ -122,7 +127,6 @@ dino_hard:
     bird: '🐦'
     high-bird: '🦅'
     cloud: '🌥'
-    legs: '∏'
   colors:
     runner: '#e0e0e0'
     duck: '#e0e0e0'
@@ -130,7 +134,6 @@ dino_hard:
     bird: '#e0b070'
     high-bird: '#d08060'
     cloud: '#6c7a96'
-    legs: '#e0e0e0'
     ground: '#8a8a8a'
     hit: '#ff4040'
   text:

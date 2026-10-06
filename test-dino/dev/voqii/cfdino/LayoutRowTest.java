@@ -31,8 +31,8 @@ public class LayoutRowTest {
     }
 
     public static void main(String[] args) {
-        String[] glyphs = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥", "∏"};
-        int[] widths = {8, 7, 6, 7, 8, 8, 4};
+        String[] glyphs = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥"};
+        int[] widths = {8, 7, 6, 7, 8, 8};
         java.util.Map<String, Integer> wmap = new java.util.HashMap<>();
         for (int i = 0; i < glyphs.length; i++) wmap.put(glyphs[i], widths[i]);
         Random r = new Random(42);
