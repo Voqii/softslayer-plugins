@@ -37,6 +37,8 @@ dino_easy:
   game-type: dino
   difficulty: 10~30
   time: 60
+  display:
+    runner-scale: 2.0
   arguments:
     obstacles: 8~11
     lanes: 14
@@ -62,6 +64,8 @@ dino_normal:
   game-type: dino
   difficulty: 30~60
   time: 60
+  display:
+    runner-scale: 2.0
   arguments:
     obstacles: 12~16
     lanes: 14
@@ -115,7 +119,7 @@ dino_hard:
     distance: 3.5          # blocks in front of the player's eyes
     height-offset: 0.4
     scale: 0.6
-    runner-scale: 2.2      # standing/jumping dino size vs the board (ducking is always 1x)
+    runner-scale: 2.0      # standing/jumping dino size vs the board (ducking is always 1x)
     runner-offset-x: 0     # nudge the dino over its column, in board pixels
     runner-offset-y: 0     # nudge the dino onto the ground line, in board pixels
     background: '#000000'
