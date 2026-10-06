@@ -37,11 +37,13 @@ import java.util.function.BiFunction;
 
 /**
  * Chrome "no internet" T-Rex style runner. Obstacles scroll right-to-left towards the runner on a
- * floating text display in front of the player (only they can see it).
+ * floating text display in front of the player (only they can see it). Three height rows:
  *
- *   cactus     -> jump
- *   low bird   -> jump or duck
- *   high bird  -> don't jump into it
+ *   sky     drifting clouds (scenery) + high birds -> only the top of a jump reaches here; don't mistime it
+ *   head    birds at head height                   -> duck under (or clear them at the top of a jump)
+ *   ground  cacti                                  -> jump
+ *
+ * A jump arcs ground -> head -> sky (apex) -> head -> ground.
  *
  * Jump: W / space / right click. Duck: hold S or sneak (pressing it mid-air fast-falls).
  * Clear every obstacle before running out of lives to land the fish.
@@ -52,13 +54,13 @@ import java.util.function.BiFunction;
  */
 public class DinoGame extends AbstractGame {
 
-    static final int CACTUS = 0, LOW_BIRD = 1, HIGH_BIRD = 2;
+    static final int CACTUS = 0, BIRD = 1, HIGH_BIRD = 2;
     private static final int CELL = 16;
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final NamespacedKey FREEZE_KEY = NamespacedKey.fromString("cfdino:freeze");
     // advance widths of 26.3 vanilla Unifont glyphs (measured from unifont_all_no_pua-17.0.01.hex)
     private static final Map<String, Integer> KNOWN_WIDTHS = Map.of(
-            "🦖", 8, "🦕", 8, "🦎", 7, "🌵", 6, "🐦", 7, "🦅", 8, "🐟", 8, "🪨", 6);
+            "🦖", 8, "🦕", 8, "🦎", 7, "🌵", 6, "🐦", 7, "🦅", 8, "🐟", 8, "🪨", 6, "🌥", 8, "🌤", 8);
 
     // course
     private final int obstaclesMin, obstaclesMax;
@@ -70,6 +72,8 @@ public class DinoGame extends AbstractGame {
     private final int birdsAfter;
     // runner
     private final long jumpMs, fastFallMs;
+    private final double apexShare;
+    private final double cloudSpeed, cloudChance;
     private final double hitbox;
     private final int lives;
     private final long invulnMs;
@@ -80,9 +84,9 @@ public class DinoGame extends AbstractGame {
     private final double distance, heightOffset;
     private final float scale;
     private final Color background;
-    private final String[] glyph = new String[5];
-    private final int[] glyphWidth = new int[5];
-    private final String[] glyphColor = new String[5];
+    private final String[] glyph = new String[6];
+    private final int[] glyphWidth = new int[6];
+    private final String[] glyphColor = new String[6];
     private final String groundColor, hitColor;
     private final String statusFormat, textReady, lifeFull, lifeEmpty;
     private final String textWin, textPerfect, textLose;
@@ -90,7 +94,9 @@ public class DinoGame extends AbstractGame {
     private final String soundJump, soundHit, soundPoint;
 
     // glyph slots
-    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_LOW = 3, G_HIGH = 4;
+    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_BIRD = 3, G_HIGH = 4, G_CLOUD = 5;
+    private static final int ROW_GROUND = 0, ROW_HEAD = 1, ROW_SKY = 2;
+    private static final String ZWNJ = "\u200c"; // zero-width, non-blank: keeps space-only rows from collapsing
 
     public DinoGame(String id, Section section) {
         super(id, GameBasics.builder()
@@ -120,6 +126,9 @@ public class DinoGame extends AbstractGame {
         birdsAfter = section.getInt("arguments.birds-after", 3);
         jumpMs = ms(section.getDouble("arguments.jump-time", 0.6));
         fastFallMs = ms(section.getDouble("arguments.fast-fall", 0.08));
+        apexShare = Math.max(0.1, Math.min(0.9, section.getDouble("arguments.apex-share", 0.4)));
+        cloudSpeed = section.getDouble("arguments.cloud-speed", 0.35);
+        cloudChance = section.getDouble("arguments.cloud-chance", 0.04);
         hitbox = section.getDouble("arguments.hitbox", 0.35);
         lives = Math.max(1, section.getInt("arguments.lives", 3));
         invulnMs = ms(section.getDouble("arguments.invulnerable-time", 1.0));
@@ -135,10 +144,10 @@ public class DinoGame extends AbstractGame {
         java.awt.Color c = java.awt.Color.decode(bg);
         background = Color.fromARGB(alpha, c.getRed(), c.getGreen(), c.getBlue());
 
-        String[] names = {"runner", "duck", "cactus", "low-bird", "high-bird"};
-        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅"};
-        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060"};
-        for (int i = 0; i < 5; i++) {
+        String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud"};
+        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥"};
+        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96"};
+        for (int i = 0; i < 6; i++) {
             glyph[i] = section.getString("glyphs." + names[i], defGlyph[i]);
             glyphWidth[i] = section.getInt("glyph-widths." + names[i], KNOWN_WIDTHS.getOrDefault(glyph[i], 8));
             glyphColor[i] = section.getString("colors." + names[i], defColor[i]);
@@ -206,6 +215,8 @@ public class DinoGame extends AbstractGame {
         private Input lastInput;
         private TextDisplay display;
         private boolean frozen;
+        private List<double[]> clouds; // {x}
+        private long lastRender;
 
         DinoPlayer(CustomFishingHook hook, GameSetting setting) {
             super(hook, setting);
@@ -224,7 +235,7 @@ public class DinoGame extends AbstractGame {
             for (int i = 0; i < count; i++) {
                 int type = CACTUS;
                 if (i >= birdsAfter && random.nextDouble() < birdChance) {
-                    type = random.nextDouble() < highBirdShare ? HIGH_BIRD : LOW_BIRD;
+                    type = random.nextDouble() < highBirdShare ? HIGH_BIRD : BIRD;
                 }
                 obstacles.add(new long[]{t, type, 0});
                 if (type == CACTUS && i >= 2 && random.nextDouble() < doubleCactusChance) {
@@ -238,6 +249,8 @@ public class DinoGame extends AbstractGame {
 
             jumps = new ArrayList<>();
             ducks = new ArrayList<>();
+            clouds = new ArrayList<>();
+            for (int i = 0; i < 3; i++) clouds.add(new double[]{random.nextDouble(1, lanes - 1)});
             livesLeft = lives;
             Player player = getPlayer();
             lastInput = player.getCurrentInput();
@@ -272,6 +285,18 @@ public class DinoGame extends AbstractGame {
             return false;
         }
 
+        /** Which row the runner's body is in: ground (standing/ducking), head height or sky (jump apex). */
+        private int rowAt(long t) {
+            for (long[] j : jumps) {
+                if (j[0] <= t && t < j[1]) {
+                    double p = (double) (t - j[0]) / jumpMs;
+                    double edge = (1 - apexShare) / 2;
+                    return p >= edge && p < 1 - edge ? ROW_SKY : ROW_HEAD;
+                }
+            }
+            return ROW_GROUND;
+        }
+
         private boolean ducking(long t) {
             if (airborne(t)) return false;
             for (long[] d : ducks) if (d[0] <= t && t < d[1]) return true;
@@ -279,10 +304,11 @@ public class DinoGame extends AbstractGame {
         }
 
         private boolean safe(int type, long t) {
+            int row = rowAt(t);
             return switch (type) {
-                case CACTUS -> airborne(t);
-                case LOW_BIRD -> airborne(t) || ducking(t);
-                default -> !airborne(t);
+                case CACTUS -> row != ROW_GROUND;
+                case BIRD -> ducking(t) || row == ROW_SKY; // a standing runner's head is at bird height
+                default -> row != ROW_SKY;
             };
         }
 
@@ -405,34 +431,48 @@ public class DinoGame extends AbstractGame {
 
         private void render(long now, long g) {
             double v = speedAt(now);
-            String[] sky = new String[lanes];
-            String[] ground = new String[lanes];
+            String[][] rows = new String[3][lanes];
+
+            // clouds drift slower than the course (parallax); purely scenery
+            double dt = lastRender == 0 ? 0 : (now - lastRender) / 1000.0;
+            lastRender = now;
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            for (double[] cl : clouds) cl[0] -= v * cloudSpeed * dt;
+            clouds.removeIf(cl -> cl[0] < -0.5);
+            double rightmost = clouds.stream().mapToDouble(cl -> cl[0]).max().orElse(-10);
+            if (rightmost < lanes - 4 && random.nextDouble() < cloudChance) clouds.add(new double[]{lanes - 0.5});
+            for (double[] cl : clouds) {
+                int c = (int) Math.round(cl[0]);
+                if (c >= 0 && c < lanes) rows[ROW_SKY][c] = cell(glyph[G_CLOUD], glyphWidth[G_CLOUD], glyphColor[G_CLOUD]);
+            }
+
             for (long[] o : obstacles) {
                 double x = playerLane + v * (o[0] - now) / 1000.0;
                 if (x > lanes - 0.5) break;
                 int c = (int) Math.round(x);
                 if (c < 0) continue;
-                int gi = o[1] == CACTUS ? G_CACTUS : o[1] == LOW_BIRD ? G_LOW : G_HIGH;
-                String s = cell(glyph[gi], glyphWidth[gi], glyphColor[gi]);
-                if (o[1] == HIGH_BIRD) sky[c] = s;
-                else ground[c] = s;
+                int type = (int) o[1];
+                int gi = type == CACTUS ? G_CACTUS : type == BIRD ? G_BIRD : G_HIGH;
+                int row = type == CACTUS ? ROW_GROUND : type == BIRD ? ROW_HEAD : ROW_SKY;
+                rows[row][c] = cell(glyph[gi], glyphWidth[gi], glyphColor[gi]);
             }
 
             boolean blinking = now - hitAt < invulnMs && ((now - hitAt) / 150) % 2 == 0;
-            boolean air = airborne(g);
-            int gi = !air && ducking(g) ? G_DUCK : G_RUNNER;
-            String runner = cell(glyph[gi], glyphWidth[gi], blinking ? hitColor : glyphColor[gi]);
-            if (air) sky[playerLane] = runner;
-            else ground[playerLane] = runner;
+            int row = rowAt(g);
+            int gi = row == ROW_GROUND && ducking(g) ? G_DUCK : G_RUNNER;
+            rows[row][playerLane] = cell(glyph[gi], glyphWidth[gi], blinking ? hitColor : glyphColor[gi]);
 
             String blank = spaces(CELL);
-            StringBuilder top = new StringBuilder();
-            StringBuilder bottom = new StringBuilder("<u><").append(groundColor).append(">");
-            for (int c = 0; c < lanes; c++) {
-                top.append(sky[c] != null ? sky[c] : blank);
-                bottom.append(ground[c] != null ? ground[c] : blank);
+            StringBuilder board = new StringBuilder();
+            for (int r = ROW_SKY; r >= ROW_GROUND; r--) {
+                StringBuilder line = new StringBuilder(ZWNJ);
+                for (int c = 0; c < lanes; c++) line.append(rows[r][c] != null ? rows[r][c] : blank);
+                line.append(ZWNJ);
+                board.append('\n');
+                if (r == ROW_GROUND) board.append("<u><").append(groundColor).append(">").append(line)
+                        .append("</").append(groundColor).append("></u>");
+                else board.append(line);
             }
-            bottom.append("</").append(groundColor).append("></u>");
 
             String status;
             if (now < firstArrival - (long) ((lanes - 1 - playerLane) / startSpeed * 1000)) {
@@ -445,7 +485,7 @@ public class DinoGame extends AbstractGame {
                         .replace("{cleared}", String.valueOf(cleared))
                         .replace("{total}", String.valueOf(obstacles.size()));
             }
-            display.text(MM.deserialize(status + "\n" + top + "\n" + bottom));
+            display.text(MM.deserialize(status + board));
             if (tip != null && !tip.isEmpty()) getPlayer().sendActionBar(MM.deserialize(tip));
         }
 
