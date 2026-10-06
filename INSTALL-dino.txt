@@ -1,0 +1,28 @@
+CustomFishing Dino runner minigame — install
+
+Chrome "no internet" T-Rex style runner for CustomFishing (2.3.26 or newer). Nothing here replaces or
+edits CustomFishing itself, its existing configs, or any resource pack — it only adds files plus one
+appended block.
+
+1. CustomFishing-Dino-1.0.5.jar  -> plugins/CustomFishing/expansions/minigame/   (new file)
+2. dino.yml                      -> plugins/CustomFishing/contents/minigame/dino.yml   (new file)
+3. Add the block in game-conditions-dino.yml to the END of plugins/CustomFishing/game-conditions.yml
+   (append only — existing entries stay as they are). Skip this step and the game is installed but
+   never picked; this is what puts it into the rotation.
+4. /cfishing reload (or restart). Log should show: "Loaded minigame expansion: dino[1.0.5] by voqii"
+
+How it plays: a board floats over the water in front of the player (only they see it).
+  🌵 cactus (ground)        -> jump        W / space / right click
+  🐦 bird (head height)     -> duck        hold S or sneak (mid-air: fast-fall)
+  🦅 high bird (sky row)    -> don't jump into it
+Walking is frozen during the game. Clear every obstacle before running out of hearts to land the fish.
+
+Tuning lives in dino.yml (obstacle count, speed ramp, gaps, bird mix, jump time, hearts). Options are
+per game: dino_easy / dino_normal / dino_hard each read their own keys, and anything left out uses the
+built-in default (the full list with defaults is shown under dino_hard). Rotation weights are in the
+dino_games block (easy +15 / normal +5 in any water, harder for silver/golden fish).
+No resource pack needed — uses vanilla font characters only.
+
+Needs a Paper/Purpur server new enough for PlayerInputEvent (MC 1.21.3+).
+Note: CustomFishing 2.3.26 does not start on Minecraft 26.3 (needs 2.3.28+ from the developer).
+When updating the expansion later, delete the old jar and use the new filename (don't overwrite in place).

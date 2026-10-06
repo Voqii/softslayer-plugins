@@ -148,7 +148,7 @@ public class DinoGame extends AbstractGame {
         distance = section.getDouble("display.distance", 3.5);
         heightOffset = section.getDouble("display.height-offset", 0.4);
         scale = section.getDouble("display.scale", 0.6).floatValue();
-        runnerScale = section.getDouble("display.runner-scale", 2.2).floatValue();
+        runnerScale = section.getDouble("display.runner-scale", 2.0).floatValue();
         runnerOffsetX = section.getDouble("display.runner-offset-x", 0.0);
         runnerOffsetY = section.getDouble("display.runner-offset-y", 0.0);
         jumpRise = Math.max(0.05, Math.min(0.5, section.getDouble("arguments.jump-rise", 0.15)));
