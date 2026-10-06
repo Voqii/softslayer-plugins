@@ -43,8 +43,10 @@ import java.util.function.BiFunction;
  *   head    birds at head height                   -> duck under
  *   ground  cacti                                  -> jump
  *
- * The runner is two rows tall: standing = head + ground (dino over legs), jumping = sky + head,
- * ducking = ground only. It's hit when an obstacle is in a row it occupies — what you see is what's judged.
+ * The runner is its own text display laid over the board so it can be scaled independently:
+ * standing = a big dino covering head + ground, jumping = the same lifted one row (sky + head, smoothly
+ * interpolated by the client), ducking = a 1x lizard on the ground only. It's hit when an obstacle is
+ * in a row it covers — what you see is what's judged.
  *
  * Jump: W / space / right click. Duck: hold S or sneak (pressing it mid-air fast-falls).
  * Clear every obstacle before running out of lives to land the fish.
@@ -86,10 +88,12 @@ public class DinoGame extends AbstractGame {
     // display
     private final double distance, heightOffset;
     private final float scale;
+    private final float runnerScale;
+    private final double runnerOffsetX, runnerOffsetY, jumpRise;
     private final Color background;
-    private final String[] glyph = new String[7];
-    private final int[] glyphWidth = new int[7];
-    private final String[] glyphColor = new String[7];
+    private final String[] glyph = new String[6];
+    private final int[] glyphWidth = new int[6];
+    private final String[] glyphColor = new String[6];
     private final String groundColor, hitColor;
     private final String statusFormat, textReady, lifeFull, lifeEmpty;
     private final String textWin, textPerfect, textLose;
@@ -97,7 +101,10 @@ public class DinoGame extends AbstractGame {
     private final String soundJump, soundHit, soundPoint;
 
     // glyph slots
-    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_BIRD = 3, G_HIGH = 4, G_CLOUD = 5, G_LEGS = 6;
+    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_BIRD = 3, G_HIGH = 4, G_CLOUD = 5;
+    // TextDisplay geometry: 1 text pixel = 0.025 blocks at scale 1; each line is 10px tall
+    private static final float PX = 0.025f;
+    private static final int LINE = 10;
     private static final int ROW_GROUND = 0, ROW_HEAD = 1, ROW_SKY = 2;
     private static final String ZWNJ = "\u200c"; // zero-width, non-blank: keeps space-only rows from collapsing
 
@@ -141,15 +148,19 @@ public class DinoGame extends AbstractGame {
         distance = section.getDouble("display.distance", 3.5);
         heightOffset = section.getDouble("display.height-offset", 0.4);
         scale = section.getDouble("display.scale", 0.6).floatValue();
+        runnerScale = section.getDouble("display.runner-scale", 2.5).floatValue();
+        runnerOffsetX = section.getDouble("display.runner-offset-x", 0.0);
+        runnerOffsetY = section.getDouble("display.runner-offset-y", 0.0);
+        jumpRise = Math.max(0.05, Math.min(0.5, section.getDouble("arguments.jump-rise", 0.15)));
         String bg = section.getString("display.background", "#000000");
         int alpha = Math.max(0, Math.min(255, section.getInt("display.background-alpha", 150)));
         java.awt.Color c = java.awt.Color.decode(bg);
         background = Color.fromARGB(alpha, c.getRed(), c.getGreen(), c.getBlue());
 
-        String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud", "legs"};
-        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥", "∏"};
-        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96", "#e0e0e0"};
-        for (int i = 0; i < 7; i++) {
+        String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud"};
+        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥"};
+        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96"};
+        for (int i = 0; i < 6; i++) {
             glyph[i] = section.getString("glyphs." + names[i], defGlyph[i]);
             glyphWidth[i] = section.getInt("glyph-widths." + names[i], KNOWN_WIDTHS.getOrDefault(glyph[i], 8));
             glyphColor[i] = section.getString("colors." + names[i], defColor[i]);
@@ -286,7 +297,9 @@ public class DinoGame extends AbstractGame {
         private List<long[]> jumps, ducks; // {start, end} in player time
         private boolean duckHeld;
         private Input lastInput;
-        private TextDisplay display;
+        private TextDisplay display, runner;
+        private String runnerText;
+        private float lastLift = -1, lastRunnerScale = -1;
         private boolean frozen;
         private List<double[]> clouds; // {x}
         private long lastRender;
@@ -493,8 +506,63 @@ public class DinoGame extends AbstractGame {
                         new Vector3f(scale, scale, scale), new AxisAngle4f()));
                 td.text(Component.empty());
             });
-            if (plugin != null) player.showEntity(plugin, display);
+            runner = at.getWorld().spawn(at, TextDisplay.class, td -> {
+                td.setPersistent(false);
+                td.setVisibleByDefault(false);
+                td.setBillboard(Display.Billboard.CENTER);
+                td.setAlignment(TextDisplay.TextAlignment.CENTER);
+                td.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                td.setShadowed(false);
+                td.setSeeThrough(false);
+                td.setBrightness(new Display.Brightness(15, 15));
+                td.setInterpolationDuration(2); // client smooths every move/scale over 2 ticks
+                td.text(Component.empty());
+            });
+            if (plugin != null) {
+                player.showEntity(plugin, display);
+                player.showEntity(plugin, runner);
+            }
             if (freezeMovement) freeze(player);
+        }
+
+        /** 0..1 height of the current jump: quick rise, hang, quick fall (fast-fall cuts it short). */
+        private float lift(long t) {
+            for (long[] j : jumps) {
+                if (j[0] <= t && t < j[1]) {
+                    double p = (double) (t - j[0]) / jumpMs;
+                    return (float) Math.max(0, Math.min(1, Math.min(p / jumpRise, (1 - p) / jumpRise)));
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Positions the runner entity over its board column. Both displays share an origin (the board's
+         * bottom-centre); translation is in board pixels, so the runner's feet sit on the ground line and
+         * a jump raises it exactly one row.
+         */
+        private void updateRunner(long now, long g) {
+            boolean ducking = ducking(g);
+            boolean blinking = now - hitAt < invulnMs && ((now - hitAt) / 150) % 2 == 0;
+            int gi = ducking ? G_DUCK : G_RUNNER;
+            String color = blinking ? hitColor : glyphColor[gi];
+            String text = "<" + color + ">" + glyph[gi] + "</" + color + ">";
+            if (!text.equals(runnerText)) {
+                runner.text(MM.deserialize(text));
+                runnerText = text;
+            }
+            float lift = ducking ? 0 : lift(g);
+            float size = ducking ? 1 : runnerScale;
+            if (lift == lastLift && size == lastRunnerScale) return;
+            lastLift = lift;
+            lastRunnerScale = size;
+            double xPx = playerLane * CELL + CELL / 2.0 - lanes * CELL / 2.0 + runnerOffsetX;
+            // glyphs sit ~2px above the bottom of their line; scaled up that gap grows, so pull it back down
+            double yPx = lift * LINE - (size - 1) * 2 + runnerOffsetY;
+            runner.setInterpolationDelay(0);
+            runner.setTransformation(new Transformation(
+                    new Vector3f((float) (xPx * PX * scale), (float) (yPx * PX * scale), 0.02f),
+                    new AxisAngle4f(), new Vector3f(scale * size, scale * size, scale * size), new AxisAngle4f()));
         }
 
         private void render(long now, long g) {
@@ -520,15 +588,7 @@ public class DinoGame extends AbstractGame {
                 rows.get(row).add(sprite(x, gi, null, 1));
             }
 
-            boolean blinking = now - hitAt < invulnMs && ((now - hitAt) / 150) % 2 == 0;
-            String tint = blinking ? hitColor : null;
-            if (ducking(g)) {
-                rows.get(ROW_GROUND).add(sprite(playerLane, G_DUCK, tint, 2));
-            } else {
-                int base = baseRow(g);
-                rows.get(base + 1).add(sprite(playerLane, G_RUNNER, tint, 2));
-                rows.get(base).add(sprite(playerLane, G_LEGS, tint, 2));
-            }
+            updateRunner(now, g);
 
             int total = lanes * CELL;
             StringBuilder board = new StringBuilder();
@@ -577,6 +637,10 @@ public class DinoGame extends AbstractGame {
                 if (display != null) {
                     display.remove();
                     display = null;
+                }
+                if (runner != null) {
+                    runner.remove();
+                    runner = null;
                 }
                 unfreeze(player);
             };
