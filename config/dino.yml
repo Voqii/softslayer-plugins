@@ -3,10 +3,11 @@
 #
 # A board floats over the water in front of the player (only they see it). Obstacles scroll
 # right-to-left towards the runner across three height rows:
-#   sky     🌥 clouds (scenery) + 🦅 high birds -> only the top of a jump reaches the sky; don't mistime it
-#   head    🐦 birds at head height             -> duck under (or clear them at the very top of a jump)
+#   sky     🌥 clouds (scenery) + 🦅 high birds -> don't jump into them
+#   head    🐦 birds at head height             -> duck under
 #   ground  🌵 cacti                            -> jump
-# A jump arcs ground -> head -> sky -> head -> ground (apex-share = fraction of the jump spent in the sky).
+# The dino is two rows tall (🦖 over ∏ legs): standing = head + ground, jumping = sky + head,
+# ducking = 🦎 on the ground only. You're hit when an obstacle is in a row you occupy.
 # Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
 # Walking (and real jumping) is frozen while the game runs.
 # Clear every obstacle before running out of lives to land the fish.
@@ -20,7 +21,6 @@
 #   gap-tighten            how much difficulty 100 shrinks the gaps (0.25 = 25%)
 #   bird-chance            chance an obstacle is a bird (after the first birds-after obstacles)
 #   high-bird-share        of the birds, the share that fly high (sky row) instead of at head height
-#   apex-share             fraction of a jump spent at the top (sky row)
 #   cloud-speed / cloud-chance   cloud drift (fraction of course speed) / per-tick spawn chance
 #   double-cactus-chance   chance of two cacti back to back (one jump clears both)
 #   jump-time              seconds in the air per jump
@@ -28,8 +28,8 @@
 #   invulnerable-time      seconds of grace after a hit
 #   ping-compensation      judge in the player's time (shifted by ping, capped)
 #
-# Glyphs are vanilla Unifont emoji (no resource pack). Cells are 16px wide; if you change a glyph,
-# set glyph-widths.<name> to its advance (Unifont: trimmed pixel width / 2 + 1), 6–8 recommended.
+# Glyphs are vanilla Unifont emoji (no resource pack), placed pixel-by-pixel so scrolling is smooth.
+# If you change a glyph, set glyph-widths.<name> to its advance (Unifont: trimmed pixel width / 2 + 1).
 
 dino_easy:
   game-type: dino
@@ -45,12 +45,11 @@ dino_easy:
     min-gap: 1.1
     max-gap: 1.8
     gap-tighten: 0.2
-    bird-chance: 0.3
+    bird-chance: 0.4
     high-bird-share: 0.3
     double-cactus-chance: 0.0
-    birds-after: 4
+    birds-after: 2
     jump-time: 0.7
-    apex-share: 0.4
     hitbox: 0.3
     lives: 3
     invulnerable-time: 1.0
@@ -71,12 +70,11 @@ dino_normal:
     min-gap: 0.9
     max-gap: 1.5
     gap-tighten: 0.25
-    bird-chance: 0.35
+    bird-chance: 0.45
     high-bird-share: 0.3
     double-cactus-chance: 0.15
-    birds-after: 3
+    birds-after: 1
     jump-time: 0.65
-    apex-share: 0.4
     hitbox: 0.35
     lives: 2
     invulnerable-time: 1.0
@@ -97,12 +95,11 @@ dino_hard:
     min-gap: 0.8
     max-gap: 1.3
     gap-tighten: 0.25
-    bird-chance: 0.45
+    bird-chance: 0.5
     high-bird-share: 0.35
     double-cactus-chance: 0.25
-    birds-after: 2
+    birds-after: 1
     jump-time: 0.6
-    apex-share: 0.4
     cloud-speed: 0.35
     cloud-chance: 0.04
     hitbox: 0.35
@@ -125,6 +122,7 @@ dino_hard:
     bird: '🐦'
     high-bird: '🦅'
     cloud: '🌥'
+    legs: '∏'
   colors:
     runner: '#e0e0e0'
     duck: '#e0e0e0'
@@ -132,6 +130,7 @@ dino_hard:
     bird: '#e0b070'
     high-bird: '#d08060'
     cloud: '#6c7a96'
+    legs: '#e0e0e0'
     ground: '#8a8a8a'
     hit: '#ff4040'
   text:

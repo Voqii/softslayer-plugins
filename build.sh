@@ -6,7 +6,7 @@
 #   src-dino/  -> CustomFishing-Dino-$DINO_VERSION.jar (game-type: dino)
 set -e
 DDR_VERSION=1.0.2
-DINO_VERSION=1.0.1
+DINO_VERSION=1.0.2
 cd "$(dirname "$0")"
 CF_JAR=${CF_JAR:-$HOME/cf-ddr/cf-src/target/CustomFishing-2.3.28.jar}
 LIBS=${LIBS:-$HOME/minecraft/data/libraries}

@@ -39,18 +39,20 @@ import java.util.function.BiFunction;
  * Chrome "no internet" T-Rex style runner. Obstacles scroll right-to-left towards the runner on a
  * floating text display in front of the player (only they can see it). Three height rows:
  *
- *   sky     drifting clouds (scenery) + high birds -> only the top of a jump reaches here; don't mistime it
- *   head    birds at head height                   -> duck under (or clear them at the top of a jump)
+ *   sky     drifting clouds (scenery) + high birds -> don't jump into them
+ *   head    birds at head height                   -> duck under
  *   ground  cacti                                  -> jump
  *
- * A jump arcs ground -> head -> sky (apex) -> head -> ground.
+ * The runner is two rows tall: standing = head + ground (dino over legs), jumping = sky + head,
+ * ducking = ground only. It's hit when an obstacle is in a row it occupies — what you see is what's judged.
  *
  * Jump: W / space / right click. Duck: hold S or sneak (pressing it mid-air fast-falls).
  * Clear every obstacle before running out of lives to land the fish.
  *
- * Glyphs are vanilla Unifont emoji (no resource pack). Every cell is exactly 16px: glyph advance
- * (Unifont: trimmed width / 2 + 1) plus padding built from 4px spaces and 5px bold spaces, so the
- * rows stay aligned under the display's centre alignment.
+ * Glyphs are vanilla Unifont emoji (no resource pack). Sprites are placed at pixel positions: the
+ * gaps between them are built from 4px spaces and 5px bold spaces (any gap except 1-3, 6, 7, 11px,
+ * which get snapped by a pixel or two), and every row has the same total width so the rows stay
+ * aligned under the display's centre alignment. Glyph advance for Unifont = trimmed width / 2 + 1.
  */
 public class DinoGame extends AbstractGame {
 
@@ -59,8 +61,10 @@ public class DinoGame extends AbstractGame {
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final NamespacedKey FREEZE_KEY = NamespacedKey.fromString("cfdino:freeze");
     // advance widths of 26.3 vanilla Unifont glyphs (measured from unifont_all_no_pua-17.0.01.hex)
-    private static final Map<String, Integer> KNOWN_WIDTHS = Map.of(
-            "🦖", 8, "🦕", 8, "🦎", 7, "🌵", 6, "🐦", 7, "🦅", 8, "🐟", 8, "🪨", 6, "🌥", 8, "🌤", 8);
+    private static final Map<String, Integer> KNOWN_WIDTHS = Map.ofEntries(
+            Map.entry("🦖", 8), Map.entry("🦕", 8), Map.entry("🦎", 7), Map.entry("🌵", 6), Map.entry("🐦", 7),
+            Map.entry("🦅", 8), Map.entry("🐟", 8), Map.entry("🪨", 6), Map.entry("🌥", 8), Map.entry("🌤", 8),
+            Map.entry("∏", 4), Map.entry("ᴧ", 4));
 
     // course
     private final int obstaclesMin, obstaclesMax;
@@ -72,7 +76,6 @@ public class DinoGame extends AbstractGame {
     private final int birdsAfter;
     // runner
     private final long jumpMs, fastFallMs;
-    private final double apexShare;
     private final double cloudSpeed, cloudChance;
     private final double hitbox;
     private final int lives;
@@ -84,9 +87,9 @@ public class DinoGame extends AbstractGame {
     private final double distance, heightOffset;
     private final float scale;
     private final Color background;
-    private final String[] glyph = new String[6];
-    private final int[] glyphWidth = new int[6];
-    private final String[] glyphColor = new String[6];
+    private final String[] glyph = new String[7];
+    private final int[] glyphWidth = new int[7];
+    private final String[] glyphColor = new String[7];
     private final String groundColor, hitColor;
     private final String statusFormat, textReady, lifeFull, lifeEmpty;
     private final String textWin, textPerfect, textLose;
@@ -94,7 +97,7 @@ public class DinoGame extends AbstractGame {
     private final String soundJump, soundHit, soundPoint;
 
     // glyph slots
-    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_BIRD = 3, G_HIGH = 4, G_CLOUD = 5;
+    private static final int G_RUNNER = 0, G_DUCK = 1, G_CACTUS = 2, G_BIRD = 3, G_HIGH = 4, G_CLOUD = 5, G_LEGS = 6;
     private static final int ROW_GROUND = 0, ROW_HEAD = 1, ROW_SKY = 2;
     private static final String ZWNJ = "\u200c"; // zero-width, non-blank: keeps space-only rows from collapsing
 
@@ -126,7 +129,6 @@ public class DinoGame extends AbstractGame {
         birdsAfter = section.getInt("arguments.birds-after", 3);
         jumpMs = ms(section.getDouble("arguments.jump-time", 0.6));
         fastFallMs = ms(section.getDouble("arguments.fast-fall", 0.08));
-        apexShare = Math.max(0.1, Math.min(0.9, section.getDouble("arguments.apex-share", 0.4)));
         cloudSpeed = section.getDouble("arguments.cloud-speed", 0.35);
         cloudChance = section.getDouble("arguments.cloud-chance", 0.04);
         hitbox = section.getDouble("arguments.hitbox", 0.35);
@@ -144,10 +146,10 @@ public class DinoGame extends AbstractGame {
         java.awt.Color c = java.awt.Color.decode(bg);
         background = Color.fromARGB(alpha, c.getRed(), c.getGreen(), c.getBlue());
 
-        String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud"};
-        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥"};
-        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96"};
-        for (int i = 0; i < 6; i++) {
+        String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud", "legs"};
+        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥", "∏"};
+        String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96", "#e0e0e0"};
+        for (int i = 0; i < 7; i++) {
             glyph[i] = section.getString("glyphs." + names[i], defGlyph[i]);
             glyphWidth[i] = section.getInt("glyph-widths." + names[i], KNOWN_WIDTHS.getOrDefault(glyph[i], 8));
             glyphColor[i] = section.getString("colors." + names[i], defColor[i]);
@@ -189,11 +191,82 @@ public class DinoGame extends AbstractGame {
         return "";
     }
 
-    private static String cell(String glyph, int width, String color) {
-        int pad = Math.max(0, CELL - width);
-        int left = pad / 2;
-        while (left > 0 && !(padable(left) && padable(pad - left))) left--;
-        return spaces(left) + "<" + color + ">" + glyph + "</" + color + ">" + spaces(pad - left);
+    record Sprite(int px, String glyph, int width, String color, int priority) {
+    }
+
+    /** A glyph centred on course position x (in cells). */
+    private Sprite sprite(double x, int gi, String tint, int priority) {
+        int px = (int) Math.round(x * CELL + (CELL - glyphWidth[gi]) / 2.0);
+        return new Sprite(px, glyph[gi], glyphWidth[gi], tint != null ? tint : glyphColor[gi], priority);
+    }
+
+    /** Nearest gap >= 0 that spaces can produce, within 3px; -1 if none. */
+    private static int snapGap(int gap) {
+        for (int d = 0; d <= 3; d++) {
+            if (gap - d >= 0 && padable(gap - d)) return gap - d;
+            if (padable(gap + d)) return gap + d;
+        }
+        return -1;
+    }
+
+    /**
+     * Lays sprites out at pixel positions in a row exactly {@code total} px wide. Overlaps keep the
+     * higher-priority sprite (runner > obstacles > clouds); positions may shift by a few px so every
+     * gap is buildable from 4px/5px spaces.
+     */
+    static String layoutRow(List<Sprite> sprites, int total) {
+        sprites.sort((a, b) -> Integer.compare(a.px(), b.px()));
+        List<Sprite> placed = new ArrayList<>();
+        List<Integer> at = new ArrayList<>();
+        for (Sprite s : sprites) {
+            if (s.px() < 0 || s.px() + s.width() > total) continue; // clip at the edges
+            int cursor = placed.isEmpty() ? 0 : at.get(at.size() - 1) + placed.get(placed.size() - 1).width();
+            int gap = snapGap(s.px() - cursor);
+            if (gap < 0) {
+                // overlaps the previous sprite: keep whichever matters more
+                if (!placed.isEmpty() && s.priority() > placed.get(placed.size() - 1).priority()) {
+                    placed.remove(placed.size() - 1);
+                    at.remove(at.size() - 1);
+                    cursor = placed.isEmpty() ? 0 : at.get(at.size() - 1) + placed.get(placed.size() - 1).width();
+                    gap = snapGap(s.px() - cursor);
+                }
+                if (gap < 0) continue;
+            }
+            placed.add(s);
+            at.add(cursor + gap);
+        }
+        // the trailing gap must be buildable too, or the row's width would change
+        while (!placed.isEmpty()) {
+            int last = placed.size() - 1;
+            int end = at.get(last) + placed.get(last).width();
+            if (padable(total - end)) break;
+            int prevEnd = last == 0 ? 0 : at.get(last - 1) + placed.get(last - 1).width();
+            boolean fixed = false;
+            for (int d = 1; d <= 3 && !fixed; d++) {
+                for (int shift : new int[]{-d, d}) {
+                    int pos = at.get(last) + shift;
+                    if (pos - prevEnd >= 0 && padable(pos - prevEnd) && total - pos - placed.get(last).width() >= 0
+                            && padable(total - pos - placed.get(last).width())) {
+                        at.set(last, pos);
+                        fixed = true;
+                        break;
+                    }
+                }
+            }
+            if (fixed) break;
+            placed.remove(last);
+            at.remove(last);
+        }
+        StringBuilder out = new StringBuilder();
+        int cursor = 0;
+        for (int i = 0; i < placed.size(); i++) {
+            Sprite s = placed.get(i);
+            out.append(spaces(at.get(i) - cursor)).append('<').append(s.color()).append('>').append(s.glyph())
+                    .append("</").append(s.color()).append('>');
+            cursor = at.get(i) + s.width();
+        }
+        out.append(spaces(total - cursor));
+        return out.toString();
     }
 
     @Override
@@ -285,16 +358,15 @@ public class DinoGame extends AbstractGame {
             return false;
         }
 
-        /** Which row the runner's body is in: ground (standing/ducking), head height or sky (jump apex). */
-        private int rowAt(long t) {
-            for (long[] j : jumps) {
-                if (j[0] <= t && t < j[1]) {
-                    double p = (double) (t - j[0]) / jumpMs;
-                    double edge = (1 - apexShare) / 2;
-                    return p >= edge && p < 1 - edge ? ROW_SKY : ROW_HEAD;
-                }
-            }
-            return ROW_GROUND;
+        /** Lowest row the runner occupies; it is two rows tall unless ducking. */
+        private int baseRow(long t) {
+            return airborne(t) ? ROW_HEAD : ROW_GROUND;
+        }
+
+        private boolean occupies(long t, int row) {
+            if (ducking(t)) return row == ROW_GROUND;
+            int base = baseRow(t);
+            return row == base || row == base + 1;
         }
 
         private boolean ducking(long t) {
@@ -304,12 +376,8 @@ public class DinoGame extends AbstractGame {
         }
 
         private boolean safe(int type, long t) {
-            int row = rowAt(t);
-            return switch (type) {
-                case CACTUS -> row != ROW_GROUND;
-                case BIRD -> ducking(t) || row == ROW_SKY; // a standing runner's head is at bird height
-                default -> row != ROW_SKY;
-            };
+            int row = type == CACTUS ? ROW_GROUND : type == BIRD ? ROW_HEAD : ROW_SKY;
+            return !occupies(t, row);
         }
 
         // ---- input ----
@@ -431,7 +499,7 @@ public class DinoGame extends AbstractGame {
 
         private void render(long now, long g) {
             double v = speedAt(now);
-            String[][] rows = new String[3][lanes];
+            List<List<Sprite>> rows = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 
             // clouds drift slower than the course (parallax); purely scenery
             double dt = lastRender == 0 ? 0 : (now - lastRender) / 1000.0;
@@ -441,33 +509,31 @@ public class DinoGame extends AbstractGame {
             clouds.removeIf(cl -> cl[0] < -0.5);
             double rightmost = clouds.stream().mapToDouble(cl -> cl[0]).max().orElse(-10);
             if (rightmost < lanes - 4 && random.nextDouble() < cloudChance) clouds.add(new double[]{lanes - 0.5});
-            for (double[] cl : clouds) {
-                int c = (int) Math.round(cl[0]);
-                if (c >= 0 && c < lanes) rows[ROW_SKY][c] = cell(glyph[G_CLOUD], glyphWidth[G_CLOUD], glyphColor[G_CLOUD]);
-            }
+            for (double[] cl : clouds) rows.get(ROW_SKY).add(sprite(cl[0], G_CLOUD, null, 0));
 
             for (long[] o : obstacles) {
                 double x = playerLane + v * (o[0] - now) / 1000.0;
-                if (x > lanes - 0.5) break;
-                int c = (int) Math.round(x);
-                if (c < 0) continue;
+                if (x > lanes) break;
                 int type = (int) o[1];
                 int gi = type == CACTUS ? G_CACTUS : type == BIRD ? G_BIRD : G_HIGH;
                 int row = type == CACTUS ? ROW_GROUND : type == BIRD ? ROW_HEAD : ROW_SKY;
-                rows[row][c] = cell(glyph[gi], glyphWidth[gi], glyphColor[gi]);
+                rows.get(row).add(sprite(x, gi, null, 1));
             }
 
             boolean blinking = now - hitAt < invulnMs && ((now - hitAt) / 150) % 2 == 0;
-            int row = rowAt(g);
-            int gi = row == ROW_GROUND && ducking(g) ? G_DUCK : G_RUNNER;
-            rows[row][playerLane] = cell(glyph[gi], glyphWidth[gi], blinking ? hitColor : glyphColor[gi]);
+            String tint = blinking ? hitColor : null;
+            if (ducking(g)) {
+                rows.get(ROW_GROUND).add(sprite(playerLane, G_DUCK, tint, 2));
+            } else {
+                int base = baseRow(g);
+                rows.get(base + 1).add(sprite(playerLane, G_RUNNER, tint, 2));
+                rows.get(base).add(sprite(playerLane, G_LEGS, tint, 2));
+            }
 
-            String blank = spaces(CELL);
+            int total = lanes * CELL;
             StringBuilder board = new StringBuilder();
             for (int r = ROW_SKY; r >= ROW_GROUND; r--) {
-                StringBuilder line = new StringBuilder(ZWNJ);
-                for (int c = 0; c < lanes; c++) line.append(rows[r][c] != null ? rows[r][c] : blank);
-                line.append(ZWNJ);
+                String line = ZWNJ + layoutRow(rows.get(r), total) + ZWNJ;
                 board.append('\n');
                 if (r == ROW_GROUND) board.append("<u><").append(groundColor).append(">").append(line)
                         .append("</").append(groundColor).append("></u>");
