@@ -6,7 +6,7 @@
 #   sky     🌥 clouds (scenery) + 🦅 high birds -> don't jump into them
 #   head    🐦 birds at head height             -> duck under
 #   ground  🌵 cacti                            -> jump
-# The dino is drawn big (runner-scale, default 2.2x) so it covers the head + ground rows; jumping
+# The dino is drawn big (runner-scale, default 2.0x) so it covers the head + ground rows; jumping
 # lifts it one row (sky + head, smoothly animated); ducking shrinks it to 1x on the ground only.
 # You're hit when an obstacle is in a row the dino covers.
 # Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
@@ -37,8 +37,6 @@ dino_easy:
   game-type: dino
   difficulty: 10~30
   time: 60
-  display:
-    runner-scale: 2.0
   arguments:
     obstacles: 8~11
     lanes: 14
@@ -64,8 +62,6 @@ dino_normal:
   game-type: dino
   difficulty: 30~60
   time: 60
-  display:
-    runner-scale: 2.0
   arguments:
     obstacles: 12~16
     lanes: 14
