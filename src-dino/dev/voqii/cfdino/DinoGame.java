@@ -45,7 +45,7 @@ import java.util.function.BiFunction;
  *
  * The runner is its own text display laid over the board so it can be scaled independently:
  * standing = a big dino covering head + ground, jumping = the same lifted one row (sky + head, smoothly
- * interpolated by the client), ducking = a 1x lizard on the ground only. It's hit when an obstacle is
+ * interpolated by the client), ducking = the same dino at 1x on the ground only. It's hit when an obstacle is
  * in a row it covers — what you see is what's judged.
  *
  * Jump: W / space / right click. Duck: hold S or sneak (pressing it mid-air fast-falls).
@@ -148,7 +148,7 @@ public class DinoGame extends AbstractGame {
         distance = section.getDouble("display.distance", 3.5);
         heightOffset = section.getDouble("display.height-offset", 0.4);
         scale = section.getDouble("display.scale", 0.6).floatValue();
-        runnerScale = section.getDouble("display.runner-scale", 2.5).floatValue();
+        runnerScale = section.getDouble("display.runner-scale", 2.2).floatValue();
         runnerOffsetX = section.getDouble("display.runner-offset-x", 0.0);
         runnerOffsetY = section.getDouble("display.runner-offset-y", 0.0);
         jumpRise = Math.max(0.05, Math.min(0.5, section.getDouble("arguments.jump-rise", 0.15)));
@@ -158,7 +158,7 @@ public class DinoGame extends AbstractGame {
         background = Color.fromARGB(alpha, c.getRed(), c.getGreen(), c.getBlue());
 
         String[] names = {"runner", "duck", "cactus", "bird", "high-bird", "cloud"};
-        String[] defGlyph = {"🦖", "🦎", "🌵", "🐦", "🦅", "🌥"};
+        String[] defGlyph = {"🦖", "🦖", "🌵", "🐦", "🦅", "🌥"};
         String[] defColor = {"#e0e0e0", "#e0e0e0", "#6fcf6f", "#e0b070", "#d08060", "#6c7a96"};
         for (int i = 0; i < 6; i++) {
             glyph[i] = section.getString("glyphs." + names[i], defGlyph[i]);
@@ -558,7 +558,7 @@ public class DinoGame extends AbstractGame {
             lastRunnerScale = size;
             double xPx = playerLane * CELL + CELL / 2.0 - lanes * CELL / 2.0 + runnerOffsetX;
             // glyphs sit ~2px above the bottom of their line; scaled up that gap grows, so pull it back down
-            double yPx = lift * LINE - (size - 1) * 2 + runnerOffsetY;
+            double yPx = lift * LINE - (size - 1) * 1.5 + runnerOffsetY;
             runner.setInterpolationDelay(0);
             runner.setTransformation(new Transformation(
                     new Vector3f((float) (xPx * PX * scale), (float) (yPx * PX * scale), 0.02f),
