@@ -1,0 +1,13 @@
+
+# TESTING ONLY (mc-dev): anyone with customfishing.dinotest (ops have it by default) gets the dino
+# runner most of the time. Remove this block once testing is done — don't ship it.
+dino_test:
+  conditions:
+    in-water: true
+    permission: customfishing.dinotest
+    "!group":
+      - special_game
+  list:
+    - dino_easy:+300
+    - dino_normal:+300
+    - dino_hard:+300

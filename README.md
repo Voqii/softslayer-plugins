@@ -14,3 +14,11 @@ Controls (default `controls: wasd`): W ↑ · A ← · S ↓ · D →, walking f
   `cells.*` in config to switch to resource-pack glyphs later.
 
 Requires CustomFishing 2.3.28+ on MC 26.3 (2.3.26 lacks the 26.3 NMS adapter).
+
+## CustomFishing-Dino (`game-type: dino`)
+
+Chrome offline-T-Rex style runner, built from `src-dino/` into its own jar (CustomFishing loads one
+GameExpansion per jar). A TextDisplay board floats over the water in front of the player (only they
+see it): 🌵 jump, 🐦 jump or duck, 🦅 don't jump. W/space/right-click jump, S/sneak duck (fast-fall in
+the air). Install like DDR with `config/dino.yml` + `config/game-conditions-dino.yml`
+(`game-conditions-dino-test.yml` is an ops-only test boost for mc-dev — don't ship it).
