@@ -6,8 +6,8 @@
 #   sky     🌥 clouds (scenery) + 🦅 high birds -> don't jump into them
 #   head    🐦 birds at head height             -> duck under
 #   ground  🌵 cacti                            -> jump
-# The dino is drawn big (runner-scale, default 2.5x) so it covers the head + ground rows; jumping
-# lifts it one row (sky + head, smoothly animated); ducking shrinks it to a 1x 🦎 on the ground only.
+# The dino is drawn big (runner-scale, default 2.2x) so it covers the head + ground rows; jumping
+# lifts it one row (sky + head, smoothly animated); ducking shrinks it to 1x on the ground only.
 # You're hit when an obstacle is in a row the dino covers.
 # Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
 # Walking (and real jumping) is frozen while the game runs.
@@ -115,14 +115,14 @@ dino_hard:
     distance: 3.5          # blocks in front of the player's eyes
     height-offset: 0.4
     scale: 0.6
-    runner-scale: 2.5      # standing/jumping dino size vs the board (ducking is always 1x)
+    runner-scale: 2.2      # standing/jumping dino size vs the board (ducking is always 1x)
     runner-offset-x: 0     # nudge the dino over its column, in board pixels
     runner-offset-y: 0     # nudge the dino onto the ground line, in board pixels
     background: '#000000'
     background-alpha: 150
   glyphs:
     runner: '🦖'
-    duck: '🦎'
+    duck: '🦖'             # crouching = the same dino at 1x
     cactus: '🌵'
     bird: '🐦'
     high-bird: '🦅'
