@@ -13,3 +13,4 @@ node_modules/
 data/
 # third-party jars (download them, see each README)
 *.jar
+.m2/
