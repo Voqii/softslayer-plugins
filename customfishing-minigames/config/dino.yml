@@ -1,0 +1,151 @@
+# Chrome-dino style runner (game-type: dino) — needs CustomFishing-Dino in expansions/minigame/.
+# Goes in plugins/CustomFishing/contents/minigame/dino.yml
+#
+# A board floats over the water in front of the player (only they see it). Obstacles scroll
+# right-to-left towards the runner across three height rows:
+#   sky     🌥 clouds (scenery) + 🦅 high birds -> don't jump into them
+#   head    🐦 birds at head height             -> duck under
+#   ground  🌵 cacti                            -> jump
+# The dino is drawn big (runner-scale, default 2.0x) so it covers the head + ground rows; jumping
+# lifts it one row (sky + head, smoothly animated); ducking shrinks it to 1x on the ground only.
+# You're hit when an obstacle is in a row the dino covers.
+# Jump: W / space / right click.  Duck: hold S or sneak — pressing it mid-air fast-falls.
+# Walking (and real jumping) is frozen while the game runs.
+# Clear every obstacle before running out of lives to land the fish.
+#
+# arguments:
+#   obstacles              how many to clear; "a~b" scales with the game's difficulty
+#   lanes / runner-lane    board width in cells / which cell the runner stands in
+#   start-speed/end-speed  scroll speed in cells per second, ramping up over the run
+#   lead-in                seconds before the first obstacle appears
+#   min-gap / max-gap      seconds between obstacles (never less than jump-time + 0.3)
+#   gap-tighten            how much difficulty 100 shrinks the gaps (0.25 = 25%)
+#   bird-chance            chance an obstacle is a bird (after the first birds-after obstacles)
+#   high-bird-share        of the birds, the share that fly high (sky row) instead of at head height
+#   cloud-speed / cloud-chance   cloud drift (fraction of course speed) / per-tick spawn chance
+#   double-cactus-chance   chance of two cacti back to back (one jump clears both)
+#   jump-time              seconds in the air per jump
+#   jump-rise              fraction of the jump spent rising (and falling) — the rest is hang time
+#   hitbox                 half-width of an obstacle in cells (smaller = more forgiving)
+#   invulnerable-time      seconds of grace after a hit
+#   ping-compensation      judge in the player's time (shifted by ping, capped)
+#
+# Glyphs are vanilla Unifont emoji (no resource pack), placed pixel-by-pixel so scrolling is smooth.
+# If you change a glyph, set glyph-widths.<name> to its advance (Unifont: trimmed pixel width / 2 + 1).
+
+dino_easy:
+  game-type: dino
+  difficulty: 10~30
+  time: 60
+  arguments:
+    obstacles: 8~11
+    lanes: 14
+    runner-lane: 2
+    start-speed: 6.0
+    end-speed: 8.0
+    lead-in: 1.5
+    min-gap: 1.1
+    max-gap: 1.8
+    gap-tighten: 0.2
+    bird-chance: 0.4
+    high-bird-share: 0.3
+    double-cactus-chance: 0.0
+    birds-after: 2
+    jump-time: 0.7
+    hitbox: 0.3
+    lives: 3
+    invulnerable-time: 1.0
+    ping-compensation: true
+    max-ping-compensation: 0.2
+
+dino_normal:
+  game-type: dino
+  difficulty: 30~60
+  time: 60
+  arguments:
+    obstacles: 12~16
+    lanes: 14
+    runner-lane: 2
+    start-speed: 7.0
+    end-speed: 10.0
+    lead-in: 1.5
+    min-gap: 0.9
+    max-gap: 1.5
+    gap-tighten: 0.25
+    bird-chance: 0.45
+    high-bird-share: 0.3
+    double-cactus-chance: 0.15
+    birds-after: 1
+    jump-time: 0.65
+    hitbox: 0.35
+    lives: 2
+    invulnerable-time: 1.0
+    ping-compensation: true
+    max-ping-compensation: 0.2
+
+dino_hard:
+  game-type: dino
+  difficulty: 60~90
+  time: 60
+  arguments:
+    obstacles: 16~22
+    lanes: 14
+    runner-lane: 2
+    start-speed: 8.5
+    end-speed: 13.0
+    lead-in: 1.2
+    min-gap: 0.8
+    max-gap: 1.3
+    gap-tighten: 0.25
+    bird-chance: 0.5
+    high-bird-share: 0.35
+    double-cactus-chance: 0.25
+    birds-after: 1
+    jump-time: 0.6
+    cloud-speed: 0.35
+    cloud-chance: 0.04
+    hitbox: 0.35
+    lives: 1
+    invulnerable-time: 1.0
+    ping-compensation: true
+    max-ping-compensation: 0.2
+  # All display options with their defaults (shown on one game; any game can use them):
+  freeze-movement: true
+  display:
+    distance: 3.5          # blocks in front of the player's eyes
+    height-offset: 0.4
+    scale: 0.6
+    runner-scale: 2.0      # standing/jumping dino size vs the board (ducking is always 1x)
+    runner-offset-x: 0     # nudge the dino over its column, in board pixels
+    runner-offset-y: 0     # nudge the dino onto the ground line, in board pixels
+    background: '#000000'
+    background-alpha: 150
+  glyphs:
+    runner: '🦖'
+    duck: '🦖'             # crouching = the same dino at 1x
+    cactus: '🌵'
+    bird: '🐦'
+    high-bird: '🦅'
+    cloud: '🌥'
+  colors:
+    runner: '#e0e0e0'
+    duck: '#e0e0e0'
+    cactus: '#6fcf6f'
+    bird: '#e0b070'
+    high-bird: '#d08060'
+    cloud: '#6c7a96'
+    ground: '#8a8a8a'
+    hit: '#ff4040'
+  text:
+    status: '{lives}  <gray>{cleared}<dark_gray>/</dark_gray>{total}</gray> 🏁'
+    ready: '<yellow>Get ready...'
+    life: '<red>❤'
+    life-lost: '<dark_gray>❤'
+    cleared: '<green><b>CAUGHT!</b>'
+    perfect: '<gold><b>FLAWLESS!</b>'
+    failed: '<red><b>SPLAT!</b>'
+  tip: '<gray>Jump <white><key:key.forward></white>/<white><key:key.jump></white>  ·  Duck <white><key:key.back></white>/<white><key:key.sneak></white>'
+  sound:
+    jump: minecraft:block.note_block.bit
+    hit: minecraft:entity.player.hurt
+    point: minecraft:block.note_block.hat
