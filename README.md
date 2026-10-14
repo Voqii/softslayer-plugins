@@ -28,6 +28,18 @@ Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 [`deployed-2026-10-14` release](https://github.com/Voqii/softslayer-plugins/releases/tag/deployed-2026-10-14).
 No third-party jars are committed or attached. Download those from their own pages.
 
+## Client mods staff use (separate forks)
+
+FZMM (head/item tools) and its library owo-lib had no builds for MC 26.2/26.3, so we ported them. Each fork has
+`voqii/26.2` and `voqii/26.3` branches. Compare them to upstream to see exactly what was patched.
+
+- [Voqii/FZMM-Mod](https://github.com/Voqii/FZMM-Mod): `a281a1a` 26.2 port, `0c8f003` duplicate-stack crash fix in the
+  "Useful block states" tab, `d6a8507` 26.3 port.
+- [Voqii/owo-lib](https://github.com/Voqii/owo-lib): `voqii/26.2` = kouhe3's community 26.2 port + our zero-size scissor
+  guard (`a0d374c6`). `voqii/26.3` = Raghav314's 26.3 port + one commit so it publishes locally (`892f7f06`).
+- Build order: owo-lib first (`./gradlew publishToMavenLocal`), then FZMM (`./gradlew build`). FZMM's build looks in
+  `mavenLocal()` for `owo-lib 0.13.1+26.3`. Once upstream ships official 26.x builds, use those instead.
+
 ## Building
 
 The build machine has no JDK or Maven installed. Everything compiles inside Docker:
