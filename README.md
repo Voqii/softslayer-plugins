@@ -10,12 +10,13 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | Folder / repo | What it is | Ours or a fork | Status (2026-10-14) |
 |---|---|---|---|
 | [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | `guilds-rebrand` is on the official test server. `dialog-ui` (rivals/wars removed, dialog menus) is in testing. Neither is merged to master. Its `CLAUDE.md` has the full status. |
-| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.4-voqii: join/leave/AFK messages | fork of milan25's plugin | live. `main` is still the old 1.5.1, so build from `26.3-brigadier`. |
+| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.4-voqii: join/leave/AFK messages | fork of milan25's plugin | live. `main` is still the old 1.5.1, so build from `26.3-brigadier`. The never-committed 1.5.2 changes are in [`customjoinmessages/`](customjoinmessages). |
 | [`ss-bot/`](ss-bot) | Discord bot that relays guild chat to each guild's own Discord channel | ours | working with SlayerGuilds' bridge |
 | [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.4, confirmed in-game |
 | [`discord-mentions/`](discord-mentions) | `@MinecraftName` in game chat pings the linked Discord user (DiscordSRV add-on) | ours | 1.0.0, loads fine but never tested end to end with a real bot token |
 | [`chat-translate/`](chat-translate) | adds an English translation under non-English chat. Plugin + local LLM service (Gemma 3 4B on llama.cpp) | ours | testing on the dev server |
 | [`customfishing-minigames/`](customfishing-minigames) | CustomFishing add-ons: DDR arrow game + Chrome-dino runner | ours (CustomFishing expansions, no fork) | DDR 1.0.2 and Dino 1.0.5 shipped |
+| [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.0.0 (source from the laptop) |
 | [`blocklocker-clantags/`](blocklocker-clantags) | lets BlockLocker signs use a clan **tag** instead of the full clan name | ours | 1.0.0 |
 | [`lootchest/`](lootchest) | LootChest 2.5.9-voqii: runs on MC 26.x, per-chest respawn variance, despawn fix, `/lc mute` | fork of Guarmanda/LootChest (GPL-3) | live (`-26.3-mute` jar) |
 | [`jar-patches/`](jar-patches) | one-class fixes injected into BetterSleeping, BlueSlimeCore, DragonDropElytra and LibsDisguises | patches to third-party jars | all were needed for MC 26.2. Check whether upstream has caught up before you re-apply them. |

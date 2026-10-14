@@ -1,0 +1,19 @@
+# HeadMark configuration
+#
+# Appends a lore "watermark" as the FINAL lore line of MoreMobHeads player heads
+# that are dropped by kills inside the listed worlds. Matches the style of your
+# LootChest watermarks.
+#
+# Formatting:
+#   - &#RRGGBB  hex colors (e.g. &#9D9D97 = your grey)
+#   - &o italic, &l bold, etc. (standard legacy codes)
+#   - Emoji are fine (your client/resource pack already renders them in LootChest lore).
+#
+# Use the world's INTERNAL folder/level name (case-sensitive), not its display name.
+
+# If true, only stamp heads from PLAYER deaths (ignores any player-textured mob heads).
+player-heads-only: true
+
+watermarks:
+  world_deathvalley: "&#9D9D97&oDeath Valley 🔥"
+  world_classpvp: "&#9D9D97&oClassPvP ⚔️"
