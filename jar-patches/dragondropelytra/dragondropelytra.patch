@@ -1,0 +1,26 @@
+--- a/src/com/github/joelgodofwar/dde/DragonDropElytra.java
++++ b/src/com/github/joelgodofwar/dde/DragonDropElytra.java
+@@ -125,8 +125,12 @@
+ 		// 0.1..2
+ 		String[] vers = mcVersion.split("\\.");
+ 		//LOGGER.log(ChatColor.RED + "vers length=" + vers.length + " vers toString=" + vers.toString() + ChatColor.RESET);
+-		int minor = Integer.parseInt(vers[1]);
+-		if(!(minor >= 13)) {
++		int major = Integer.parseInt(vers[0]);
++		// Post-1.20.x Minecraft versions dropped the leading "1." (e.g. "26.2" instead of
++		// "1.26.2"), so vers[1] is no longer the classic minor version - it's a patch number.
++		// Any non-"1.x" version string is necessarily newer than 1.13.
++		boolean isCompatible = (major != 1) || (Integer.parseInt(vers[1]) >= 13);
++		if(!isCompatible) {
+ 			LOGGER.log(ChatColor.RED + "WARNING!" + ChatColor.GREEN + "*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!" + ChatColor.RESET);
+ 			LOGGER.log(ChatColor.RED + "WARNING! " + ChatColor.YELLOW + get("jgow.message.server_not_version") + ChatColor.RESET);
+ 			LOGGER.log(ChatColor.RED + "WARNING! " + ChatColor.YELLOW + THIS_NAME + " v" + THIS_VERSION + " disabling." + ChatColor.RESET);
+@@ -912,7 +916,7 @@
+ 		int enchantmentlevel = 0;
+ 		if(event.getEntity().getKiller() != null) {
+ 			ItemStack itemstack = event.getEntity().getKiller().getInventory().getItemInMainHand();
+-			enchantmentlevel = itemstack.getEnchantmentLevel(Enchantment.LOOT_BONUS_MOBS);
++			enchantmentlevel = itemstack.getEnchantmentLevel(Enchantment.LOOTING);
+ 		}
+ 		double enchantmentlevelpercent = ((double)enchantmentlevel / 100);
+ 

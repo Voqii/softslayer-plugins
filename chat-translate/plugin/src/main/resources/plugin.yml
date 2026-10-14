@@ -1,0 +1,21 @@
+name: ChatTranslate
+version: 1.0.0
+main: net.voqii.chattranslate.ChatTranslate
+api-version: '1.21'
+author: voqii
+description: One-way chat translation (non-English -> English) via a local LLM service
+commands:
+  translations:
+    description: Show or hide chat translations for yourself
+    usage: /translations [on|off|toggle|reload]
+    aliases: [tl]
+permissions:
+  chattranslate.see:
+    description: Receives translated chat lines
+    default: true
+  chattranslate.bypass:
+    description: Messages from this player are never translated
+    default: false
+  chattranslate.admin:
+    description: /translations reload
+    default: op

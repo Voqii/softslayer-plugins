@@ -1,0 +1,459 @@
+diff --git a/fall_effect/pom.xml b/fall_effect/pom.xml
+index 3b1cc16..ed13f43 100644
+--- a/fall_effect/pom.xml
++++ b/fall_effect/pom.xml
+@@ -63,7 +63,6 @@
+         <module>v_1_21_9</module>
+         <module>v_1_21_10</module>
+         <module>v_1_21_11</module>
+-        <module>v_26_1</module>
+     </modules>
+         
+ 
+diff --git a/lootchest/pom.xml b/lootchest/pom.xml
+index 8d83739..a06d1d4 100644
+--- a/lootchest/pom.xml
++++ b/lootchest/pom.xml
+@@ -115,7 +115,7 @@
+         </repository>
+         <repository>
+             <id>local-repo</id>
+-            <url>file:///mnt/data2/Games/minecraft/LootChest/requirements/local-repo</url>
++            <url>file:///home/voqii/lootchest-fork/requirements/local-repo</url>
+         </repository>
+         <repository>
+             <id>dmulloy2-repo</id>
+@@ -289,7 +289,6 @@
+         <dependency><groupId>fr.black_eyes.lootchest</groupId><artifactId>v_1_21_9</artifactId><version>${revision}</version></dependency>
+         <dependency><groupId>fr.black_eyes.lootchest</groupId><artifactId>v_1_21_10</artifactId><version>${revision}</version></dependency>
+         <dependency><groupId>fr.black_eyes.lootchest</groupId><artifactId>v_1_21_11</artifactId><version>${revision}</version></dependency>
+-        <dependency><groupId>fr.black_eyes.lootchest</groupId><artifactId>v_26_1</artifactId><version>${revision}</version></dependency>
+ 
+         <dependency>
+             <groupId>fr.black_eyes.lootchest</groupId>
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestHologram.java b/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestHologram.java
+index a4075f2..48e68ae 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestHologram.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestHologram.java
+@@ -172,7 +172,7 @@ public class LootChestHologram {
+     		public void run() {
+     			Hologram holo = getHologram();
+     			long tempsActuel = (new Timestamp(System.currentTimeMillis())).getTime()/1000;
+-    			long secondes = chest.getTime()*60;
++    			long secondes = chest.getEffectiveRespawnSeconds();
+     			long tempsEnregistre = chest.getLastReset()/1000;
+     			secondes = secondes - (tempsActuel - tempsEnregistre);
+     			long secs = secondes%60;
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestUtils.java b/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestUtils.java
+index 3a8521d..2f39094 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestUtils.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/LootChestUtils.java
+@@ -136,7 +136,7 @@ public class LootChestUtils  {
+ 			return;
+ 		}
+ 		long tempsEnregistre = lc.getLastReset();
+-		long timeToWait = (minutes*60-((tempsActuel - tempsEnregistre)/1000));
++		long timeToWait = (lc.getEffectiveRespawnSeconds()-((tempsActuel - tempsEnregistre)/1000));
+ 		//if chest should already have respawned (e.g. it failed to spawn and send us here), let's retry in 30 seconds
+ 		if(timeToWait<0) {
+ 			timeToWait = 30;
+@@ -489,8 +489,9 @@ public class LootChestUtils  {
+ 	 * @return the name of the world
+ 	 */
+ 	public static String getWorldName(World world) {
+-		String name =  world.toString().replace("CraftWorld{name=", "");
+-		return name.substring(0, name.length() - 1);
++		// use the API directly; parsing CraftWorld.toString() breaks on 26.x where the
++		// format changed (it now includes dimension info), corrupting the world name.
++		return world.getName();
+ 	}
+ 
+ 	/**
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/Lootchest.java b/lootchest/src/main/java/fr/black_eyes/lootchest/Lootchest.java
+index 589b519..fb3e9e6 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/Lootchest.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/Lootchest.java
+@@ -2,6 +2,7 @@ package fr.black_eyes.lootchest;
+ 
+ import java.sql.Timestamp;
+ import java.util.Objects;
++import java.util.concurrent.ThreadLocalRandom;
+ 
+ import org.bukkit.Bukkit;
+ import org.bukkit.Location;
+@@ -29,6 +30,7 @@ public class Lootchest {
+ 
+ 	public static final String MAX_FILLED_SLOTS = ".maxFilledSlots";
+ 	public static final String RANDOMRADIUS = ".randomradius";
++	public static final String RANDOM_RANGE = ".randomRange";
+ 	public static final String PARTICLE = ".particle";
+ 	public static final String PROTECTION_TIME = ".protectionTime";
+ 	public static final String TYPE = ".type";
+@@ -85,6 +87,19 @@ public class Lootchest {
+ 	@Getter
+ 	@Setter private long time;
+ 
++	/**
++	 * @return the +/- random spread (in minutes) applied to the respawn time. 0 = exact interval (default).
++	 * @param randomRange the +/- random spread (in minutes) applied to the respawn time.
++	 */
++	@Getter
++	@Setter private long randomRange;
++
++	/**
++	 * The current cycle's rolled random offset, in seconds, within [-randomRange*60, +randomRange*60].
++	 * Rolled once per respawn cycle so the target time stays stable between scheduler ticks. Not persisted.
++	 */
++	private long randomOffsetSeconds;
++
+ 	/**
+ 	 * @return the last respawn date of the chest, in milliseconds.
+ 	 * @param lastReset the last respawn date of the chest, in milliseconds.
+@@ -245,12 +260,15 @@ public class Lootchest {
+ 		world = configFiles.getData().getString(DATA_CHEST_PATH + naming + ".position.world");
+ 		direction = configFiles.getData().getString(DATA_CHEST_PATH + naming + ".direction");
+ 		lastReset = configFiles.getData().getLong(DATA_CHEST_PATH + name + ".lastreset");
+-		
++		// 0 if unset -> existing chests keep exact intervals (backward compatible)
++		randomRange = configFiles.getData().getLong(DATA_CHEST_PATH + name + RANDOM_RANGE);
++		rollRandomOffset();
++
+ 		hologram = new LootChestHologram(this);
+ 	}
+-	
+-	
+-	
++
++
++
+ 	/**
+ 	 * Function used for /lc create
+ 	 * @param chest - The block of the chest
+@@ -288,9 +306,11 @@ public class Lootchest {
+ 		((InventoryHolder) chest.getLocation().getBlock().getState()).getInventory().clear();
+ 		chest.getLocation().getBlock().setType(Material.AIR);
+ 		protectionTime = Main.configs.defaultRespawnProtection;
++		randomRange = 0;
++		rollRandomOffset();
+ 		hologram = new LootChestHologram(this);
+ 	}
+-	
++
+ 	public Lootchest(Lootchest lc, String name){
+ 		type = lc.getType();
+ 		taken = false;
+@@ -317,6 +337,8 @@ public class Lootchest {
+ 		radius = lc.getRadius();
+ 		world = lc.getWorld();
+ 		protectionTime = lc.getProtectionTime();
++		randomRange = lc.getRandomRange();
++		rollRandomOffset();
+ 		hologram = new LootChestHologram(this);
+ 	}
+ 	
+@@ -345,6 +367,7 @@ public class Lootchest {
+ 		configFiles.getData().set(DATA_CHEST_PATH + name + ".direction", direction);
+ 		configFiles.getData().set(DATA_CHEST_PATH + name + ".holo", holo);
+ 		configFiles.getData().set(DATA_CHEST_PATH + name + ".time", time);
++		configFiles.getData().set(DATA_CHEST_PATH + name + RANDOM_RANGE, randomRange);
+ 		configFiles.getData().set(DATA_CHEST_PATH + name + PROTECTION_TIME, protectionTime);
+ 		utils.setPosition(name, globalLoc);
+ 		configFiles.getData().set(DATA_CHEST_PATH + name + ".lastreset", lastReset);
+@@ -408,10 +431,34 @@ public class Lootchest {
+ 	}
+ 
+ 	private boolean checkIfTimeToRespawn(){
++		if(getTime() < 0) return false; // -1 = auto respawn disabled
+ 		long tempsactuel = (new Timestamp(System.currentTimeMillis())).getTime();
+-		long minutes = getTime()*60*1000;
++		long windowMillis = getEffectiveRespawnSeconds()*1000;
+ 		long tempsenregistre = getLastReset();
+-		return (tempsactuel - tempsenregistre > minutes && minutes>-1);
++		return (tempsactuel - tempsenregistre > windowMillis);
++	}
++
++	/**
++	 * Rolls a fresh random offset for the current respawn cycle, in [-randomRange, +randomRange] (as seconds).
++	 * Called whenever a new cycle begins (lastReset updated), the chest is (re)loaded, or the range changes,
++	 * so the respawn target stays stable until the chest actually respawns.
++	 */
++	public void rollRandomOffset() {
++		if(randomRange <= 0 || time <= 0) {
++			randomOffsetSeconds = 0;
++			return;
++		}
++		long rangeSec = randomRange * 60L;
++		randomOffsetSeconds = ThreadLocalRandom.current().nextLong(-rangeSec, rangeSec + 1);
++	}
++
++	/**
++	 * @return the effective respawn delay for the current cycle in seconds: the base time plus this
++	 * cycle's rolled random offset, never negative. Read by both the scheduler and the respawn check
++	 * so they always agree on the same (jittered) target.
++	 */
++	public long getEffectiveRespawnSeconds() {
++		return Math.max(0L, time * 60L + randomOffsetSeconds);
+ 	}
+ 
+ 	/**
+@@ -543,7 +590,7 @@ public class Lootchest {
+ 
+ 		// handle natural spawning messages - command respawn messages are handled in command class
+ 		if(!forceSpawn && isRespawnNaturalMsgEnabled() ) {
+-			String naturalMsg = Utils.color((((Main.configs.noteNaturalMsg.replace("[Chest]", holo)).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world));
++			String naturalMsg = Utils.color((((Main.configs.noteNaturalMsg.replace("[Chest]", getDisplayName())).replace("[x]", spawnLoc.getX()+"")).replace("[y]", spawnLoc.getY()+"")).replace("[z]", spawnLoc.getZ()+"").replace("[World]", world));
+ 			if(Main.configs.noteBungeeBroadcast) {
+ 				BungeeChannel.bungeeBroadcast(naturalMsg);
+ 			}
+@@ -673,8 +720,17 @@ public class Lootchest {
+ 		hologram.setText(holo);
+ 	}
+ 
++	/**
++	 * @return the name to show in player-facing messages: the hologram text when a real one is set,
++	 * otherwise the chest's own name (so broadcasts never display the "none" placeholder).
++	 */
++	public String getDisplayName() {
++		return (holo != null && !holo.isEmpty() && !holo.equalsIgnoreCase("none")) ? holo : name;
++	}
++
+ 	public void setLastReset() {
+ 		this.lastReset = (new Timestamp(System.currentTimeMillis())).getTime();
++		rollRandomOffset(); // new cycle -> pick a fresh random offset for the next respawn
+ 	}
+ 
+ 	/**
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/Main.java b/lootchest/src/main/java/fr/black_eyes/lootchest/Main.java
+index 3822e26..a7496d7 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/Main.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/Main.java
+@@ -47,7 +47,7 @@ public class Main extends SimpleJavaPlugin {
+ 	@Override
+ 	public void onDisable() {
+ 		super.onDisable();
+-		hologramPlugin.onDisable();
++		if(hologramPlugin != null) hologramPlugin.onDisable(); // may be null if holograms weren't loaded (unsupported version)
+ 		LootChestUtils.saveAllChests();
+ 	}
+     
+@@ -85,6 +85,9 @@ public class Main extends SimpleJavaPlugin {
+ 	 */
+ 	public static int getCompleteVersion(){
+ 		String completeVer = Bukkit.getBukkitVersion().split("-")[0];
++		// some forks (e.g. Purpur on 26.x) embed build info like "26.1.2build2592"
++		// with no separator; keep only the leading numeric version (digits and dots).
++		completeVer = completeVer.replaceAll("[^0-9.].*$", "");
+ 		String sversion = completeVer.replace(".", "");
+ 		if(sversion.startsWith("18") || sversion.startsWith("19") || sversion.startsWith("17")){
+ 			//add a 0 between the first and second digit
+@@ -106,11 +109,24 @@ public class Main extends SimpleJavaPlugin {
+ 	public void onEnable() {
+ 		setInstance(this);
+ 
+-		if(hologramPlugin == null && getCompleteVersion() >= 1080){
+-			hologramPlugin = new DecentHologramsPlugin();
+-		}
+-		if (getCompleteVersion() >= 1080){
+-			hologramImpl = hologramPlugin.onEnable(this);
++		// Load the bundled DecentHolograms library only when holograms are enabled AND this server
++		// version actually has a DecentHolograms NMS adapter. (Config isn't parsed yet, so read the
++		// raw value; default true keeps existing behavior.) On versions with no hologram adapter
++		// (e.g. MC 26.x) we keep the plugin alive with holograms disabled instead of crashing.
++		boolean useHolo = getConfig().getBoolean("UseHologram", true);
++		boolean holoUnavailable = false;
++		if(useHolo && getCompleteVersion() >= 1080){
++			try {
++				// probe: throws DecentHologramsNmsException if no NMS adapter exists for this version
++				new eu.decentsoftware.holograms.nms.NmsAdapterFactory().createNmsAdapter(eu.decentsoftware.holograms.api.utils.reflect.Version.CURRENT);
++				if(hologramPlugin == null) hologramPlugin = new DecentHologramsPlugin();
++				hologramImpl = hologramPlugin.onEnable(this);
++			} catch (Throwable t) {
++				getLogger().warning("Holograms are unavailable on this server version (no DecentHolograms NMS adapter); continuing with holograms disabled.");
++				hologramPlugin = null;
++				hologramImpl = null;
++				holoUnavailable = true;
++			}
+ 		}
+ 
+ 		lootChest = new HashMap<>();
+@@ -150,6 +166,8 @@ public class Main extends SimpleJavaPlugin {
+ 		
+ 		//load config
+ 		setConfigs(Config.getInstance(configFiles.getConfig()));
++		// if holograms couldn't load (unsupported version), force them off so nothing tries to use them
++		if(holoUnavailable) configs.usehologram = false;
+ 
+ 		//If we enabled bungee broadcast, but we aren't on a bungee server, not any message will show
+         if(configs.noteBungeeBroadcast && !hasBungee()){
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/commands/commands/RespawnCommand.java b/lootchest/src/main/java/fr/black_eyes/lootchest/commands/commands/RespawnCommand.java
+index 7bd8088..a44f346 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/commands/commands/RespawnCommand.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/commands/commands/RespawnCommand.java
+@@ -36,7 +36,7 @@ public class  RespawnCommand extends SubCommand {
+ 		Utils.msg(sender, "succesfulyRespawnedChest", Constants.CHEST_PLACEHOLDER, chestName);
+ 		if (lc.isRespawnCmdMsgEnabled()) {
+ 			Block block = lc.getActualLocation().getBlock();
+-			String holo = lc.getHolo();
++			String holo = lc.getDisplayName();
+ 			String message = Utils.color((((Main.configs.noteCommandMsg.replace("[World]", block.getWorld().getName()).replace(Constants.CHEST_PLACEHOLDER, holo)).replace("[x]", block.getX() + "")).replace("[y]", block.getY() + "")).replace("[z]", block.getZ() + ""));
+ 			if (Main.configs.noteBungeeBroadcast) {
+ 				BungeeChannel.bungeeBroadcast(message);
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/listeners/DeleteListener.java b/lootchest/src/main/java/fr/black_eyes/lootchest/listeners/DeleteListener.java
+index c2905b7..6f1d21b 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/listeners/DeleteListener.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/listeners/DeleteListener.java
+@@ -120,8 +120,21 @@ public class DeleteListener implements Listener  {
+ 			Location loc = openInvs.get(p).clone();
+ 			// we still check if the inv is a lootchest
+     		Lootchest key = LootChestUtils.isLootChest(loc);
++			// Bugfix: only treat this as "closing the lootchest" if the inventory actually
++			// being closed is that lootchest's own inventory. Without this check, ANY
++			// inventory a player closes (their own inventory, a furnace, an unrelated
++			// chest...) while they have a stale openInvs entry - e.g. they opened this
++			// lootchest earlier and walked away without triggering a matching close -
++			// gets wrongly attributed to this lootchest, including crediting them in the
++			// take-message broadcast for loot someone else actually took. We also leave
++			// the entry in openInvs on a mismatch, since this close event wasn't actually
++			// about this chest and a later real close should still be tracked correctly.
++			// Match on the block's location: key.getInv() is the chest's saved loot template
++			// (Bukkit.createInventory), never the live block inventory, so comparing against
++			// it never matched and chests stopped being removed after looting.
++			Location invLoc = inv.getLocation();
++			if(key == null || invLoc == null || !invLoc.getBlock().equals(loc.getBlock())) return;
+ 			openInvs.remove(p);
+-			if(key == null) return;
+ 			if((Main.configs.removeEmptyChests && LootChestUtils.isEmpty(inv)) || Main.configs.removeChestAfterFirstOpening) {
+ 				// if we should break chest naturally, drop an item of key.getType() at the location of the chest
+ 				if(Main.configs.destroyNaturallyInsteadOfRemovingChest)
+@@ -170,7 +183,7 @@ public class DeleteListener implements Listener  {
+ 	private void sendChestTakeMessageIfEnabled(Lootchest keys, Player p) {
+ 		if(keys.isTakeMsgEnabled() && !keys.isTaken()){
+ 			keys.setTaken(true);
+-			String msg = Utils.color(Objects.requireNonNull(Main.getInstance().getConfigFiles().getLang().getString("playerTookChest")).replace("[Player]", p.getName()).replace("[Chest]", keys.getHolo()));
++			String msg = Utils.color(Objects.requireNonNull(Main.getInstance().getConfigFiles().getLang().getString("playerTookChest")).replace("[Player]", p.getName()).replace("[Chest]", keys.getDisplayName()));
+ 			if(Main.configs.noteBungeeBroadcast) {
+ 				BungeeChannel.bungeeBroadcast(msg);
+ 			}
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/particles/FastReflection.java b/lootchest/src/main/java/fr/black_eyes/lootchest/particles/FastReflection.java
+index 906326f..7477b24 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/particles/FastReflection.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/particles/FastReflection.java
+@@ -20,8 +20,10 @@ public final class FastReflection {
+             ( Bukkit.getServer().getClass().getSimpleName().equals("CraftServer")
+             ? Bukkit.getServer().getClass().getPackage().getName().substring(OBC_PACKAGE.length() + 1)
+             : "unknown")
+-    // now for new ones:
+-        : eu.decentsoftware.holograms.api.utils.reflect.Version.getCurrentVersion().name();
++    // now for new ones (only legacy <1.13 particles use this; a version the holograms
++    // lib doesn't know yet must not crash plugin enable):
++        : java.util.Optional.ofNullable(eu.decentsoftware.holograms.api.utils.reflect.Version.getCurrentVersion())
++            .map(Enum::name).orElse("unknown");
+ 
+     private FastReflection() {
+         throw new UnsupportedOperationException();
+diff --git a/lootchest/src/main/java/fr/black_eyes/lootchest/ui/menu/TimeMenu.java b/lootchest/src/main/java/fr/black_eyes/lootchest/ui/menu/TimeMenu.java
+index 4aaac94..3feb192 100644
+--- a/lootchest/src/main/java/fr/black_eyes/lootchest/ui/menu/TimeMenu.java
++++ b/lootchest/src/main/java/fr/black_eyes/lootchest/ui/menu/TimeMenu.java
+@@ -34,7 +34,16 @@ public class TimeMenu extends ChestUi {
+ 		setItem(14, nameItem(Mat.STICK, ""), null);
+ 		setItem(15, new ItemStack(Mat.BARRIER), p -> addTime(0, 0, 10), p -> addTime(0, 0, -10));
+ 		setItem(16, new ItemStack(Mat.BARRIER), p -> addTime(0, 0, 1), p -> addTime(0, 0, -1));
+-		
++
++		// random spread (+/-) controls, column-aligned under the base timer and styled the same way:
++		// gold ingot = hours, gold nugget = minutes, digits shown as stack size. Left-click +, right-click -.
++		setItem(18, nameItem(Mat.SIGN, ""), null); // info sign, filled in by updateTimeDial
++		setItem(21, new ItemStack(Mat.BARRIER), p -> addRange(10, 0), p -> addRange(-10, 0));
++		setItem(22, new ItemStack(Mat.BARRIER), p -> addRange(1, 0), p -> addRange(-1, 0));
++		setItem(23, nameItem(Mat.STICK, ""), null);
++		setItem(24, new ItemStack(Mat.BARRIER), p -> addRange(0, 10), p -> addRange(0, -10));
++		setItem(25, new ItemStack(Mat.BARRIER), p -> addRange(0, 1), p -> addRange(0, -1));
++
+ 		updateTimeDial();
+ 	}
+ 	
+@@ -59,6 +68,21 @@ public class TimeMenu extends ChestUi {
+ 		updateTimeDial();
+ 	}
+ 	
++	/**
++	 * Adds a delta (in hours/minutes) to the chest's random respawn spread (the +/- range).
++	 */
++	private void addRange(int dHours, int dMinutes) {
++		long range = chest.getRandomRange();
++		long hours = range / 60;
++		long minutes = range % 60;
++
++		hours = clamp(hours + dHours, 99);
++		minutes = clamp(minutes + dMinutes, 59);
++		chest.setRandomRange(hours * 60 + minutes);
++		chest.rollRandomOffset(); // re-roll within the new range so a mid-cycle change takes effect cleanly
++		updateTimeDial();
++	}
++
+ 	private long clamp(long value, long max) {
+ 		return Math.max(0, Math.min(max, value));
+ 	}
+@@ -76,10 +100,35 @@ public class TimeMenu extends ChestUi {
+ 		displayNumber((int) days, 9, Mat.GOLD_BLOCK, "Menu.time.days");
+ 		displayNumber((int) hours, 12, Mat.GOLD_INGOT, "Menu.time.hours");
+ 		displayNumber((int) minutes, 15, Mat.GOLD_NUGGET, "Menu.time.minutes");
+-		String timeInfo = minutes < 0 ?
+-				"Respawn time: infinite" :
+-				String.format("Respawn time: %d days, %d hours, %d minutes.", days, hours, minutes);
+-		setItem(22, nameItem(Mat.SIGN, timeInfo), null);
++		long range = chest.getRandomRange();
++		displaySpread((int)(range / 60), 21, Mat.GOLD_INGOT, "Spread hours");
++		displaySpread((int)(range % 60), 24, Mat.GOLD_NUGGET, "Spread minutes");
++
++		// info sign: title + multi-line lore (renameItem splits lore on "||")
++		String baseStr = (days > 0 ? days + "d " : "") + hours + "h " + minutes + "m";
++		String lore;
++		if(time < 0) {
++			lore = "Auto-respawn: OFF (infinite)";
++		} else if(range > 0) {
++			long lo = Math.max(0, time - range);
++			long hi = time + range;
++			lore = "Base time: " + baseStr
++				+ "||Spread: +/- " + (range / 60) + "h " + (range % 60) + "m"
++				+ "||Respawns every: " + lo + "-" + hi + " min (random)";
++		} else {
++			lore = "Base time: " + baseStr + "||Spread: none (exact respawns)";
++		}
++		changeItem(18, nameItem(Mat.SIGN, "Respawn timing", 1, lore));
++	}
++
++	/**
++	 * Like displayNumber, but with a literal item name (used for the spread controls).
++	 */
++	private void displaySpread(int number, int startSlot, Material mat, String name) {
++		int digit1 = number / 10 % 10;
++		int digit2 = number % 10;
++		changeItem(startSlot, digit1 > 0 ? nameItem(mat, name, digit1) : nameItem(Mat.BARRIER, name));
++		changeItem(startSlot + 1, digit2 > 0 ? nameItem(mat, name, digit2) : nameItem(Mat.BARRIER, name));
+ 	}
+ 
+ 	/**
+@@ -102,6 +151,7 @@ public class TimeMenu extends ChestUi {
+ 
+ 	@Override
+ 	public void onClose(Player player) {
++		chest.updateData(); // persist time + random spread changes to data.yml
+ 		uiHandler.openUi(player, UiHandler.UiType.MAIN, chest, 2);
+-	}   
++	}
+ }
+diff --git a/lootchest/src/main/resources/lang.yml b/lootchest/src/main/resources/lang.yml
+index b2f55c5..38c8732 100644
+--- a/lootchest/src/main/resources/lang.yml
++++ b/lootchest/src/main/resources/lang.yml
+@@ -73,7 +73,7 @@ Menu:
+     name: '&1Items in chest [Chest]'
+   time:
+     infinite: '&6Deactivates the respawn time'
+-    name: '&1Temps de respawn'
++    name: '&1Respawn Time & Spread'
+     minutes: '&aMinutes'
+     hours: '&aHours'
+     days: '&aDays'

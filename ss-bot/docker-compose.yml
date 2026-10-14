@@ -1,0 +1,10 @@
+services:
+  ss-bot:
+    build: .
+    container_name: ss-bot
+    restart: unless-stopped
+    network_mode: host   # the SimpleClans bridge only listens on 127.0.0.1
+    user: "1000:1000"
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./data:/app/data

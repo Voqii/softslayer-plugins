@@ -1,0 +1,70 @@
+  # Self-hosted LibreTranslate — now only the FALLBACK for mc-translator (used when the LLM
+  # is slow/busy/down). Bound to 127.0.0.1 only
+  # (mc uses host networking, so it reaches this at localhost:5000; nothing on LAN/internet).
+  # No API key needed. Add languages to LT_LOAD_ONLY as needed (models persist in the volume).
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: mc-libretranslate
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      LT_LOAD_ONLY: "en,sv,fr,es"
+      LT_UPDATE_MODELS: "true"
+      LT_THREADS: "1"          # fallback only now — 1 worker (~0.7 GB) instead of 4 (~2.8 GB)
+    volumes:
+      - ./libretranslate:/home/libretranslate/.local
+    restart: unless-stopped
+
+  # Local LLM for chat translation: Gemma 3 4B (Google QAT Q4_0 GGUF) on llama.cpp's server.
+  # Not Ollama: Gemma 3's sliding-window attention needs llama.cpp's --swa-full so the ~800-token
+  # system prompt (slang glossary + examples) is reused between messages — without it every
+  # message re-processed it (~16 s on CPU). With it: ~1-2.5 s per message on CPU.
+  # Localhost only. Capped so it can never starve Plex / the MC server of RAM again
+  # (2026-09-30 an uncapped benchmark OOM-killed mc-dev): at mem_limit the kernel kills THIS.
+  llm:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: mc-llm
+    command: >-
+      -m /models/gemma-3-4b-it-qat-Q4_0.gguf -c 2048 -t 4 --parallel 1
+      --swa-full --jinja --host 0.0.0.0 --port 8080
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./llm:/models:ro
+    cpus: 4
+    cpu_shares: 512                    # half the default weight: Plex / MC win CPU contention
+    mem_limit: 4g
+    # GPU split (GTX 960, 2 GB) — after the reboot: switch image to a GPU build, add -ngl <layers>
+    # to the command, and reserve the GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    restart: unless-stopped
+
+  # mc-translator: English gate + Gemma prompt + LibreTranslate fallback, for the
+  # ChatTranslate plugin. Source: ~/chat-translate/service. Logs every translation to
+  # ./translator/logs/*.jsonl. Host networking so it can reach llm/libretranslate on
+  # localhost; it binds 127.0.0.1:5100 only.
+  translator:
+    build: ./service
+    container_name: mc-translator
+    network_mode: host
+    environment:
+      LANGS: "en,sv,es,fr"
+      LLM_URL: "http://127.0.0.1:8081"
+      LLM_TIMEOUT: "8"
+      EN_SKIP: "0.75"
+    volumes:
+      - ./translator:/data
+    mem_limit: 512m
+    depends_on:
+      - llm
+      - libretranslate
+    restart: unless-stopped
+
+  # playit.gg tunnel: gives friends a public *.ply.gg address with no port
+  # forwarding and without exposing your home IP. host networking lets the

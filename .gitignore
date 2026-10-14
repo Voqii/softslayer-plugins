@@ -1,0 +1,15 @@
+# build output
+target/
+build/
+dist/
+out/
+*.class
+__pycache__/
+node_modules/
+# never commit secrets or runtime data
+.env
+.env.*
+!.env.example
+data/
+# third-party jars (download them, see each README)
+*.jar

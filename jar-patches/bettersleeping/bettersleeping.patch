@@ -1,0 +1,22 @@
+--- a/be/betterplugins/bettersleeping/shade/betteryaml/files/TempFileCopier.java
++++ b/be/betterplugins/bettersleeping/shade/betteryaml/files/TempFileCopier.java
+@@ -21,8 +21,12 @@
+         tempFolder.mkdir();
+         FileWriter fileWriter = new FileWriter(tempPath + fileName);
+         BufferedWriter tempWriter = new BufferedWriter(fileWriter);
+-        while (defaultReader.ready()) {
+-            String line = defaultReader.readLine();
++        // BufferedReader#ready() only promises a non-blocking read is available right now -
++        // it is NOT an EOF check, and can return false prematurely depending on the
++        // InputStream implementation backing the resource (e.g. Paper's plugin resource
++        // streams), truncating the copy. Use the standard readLine()-until-null idiom instead.
++        String line;
++        while ((line = defaultReader.readLine()) != null) {
+             tempWriter.write(line);
+             tempWriter.newLine();
+         }
+@@ -35,4 +39,3 @@
+         this.copiedFile.delete();
+     }
+ }
+-

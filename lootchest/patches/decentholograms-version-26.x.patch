@@ -1,0 +1,30 @@
+diff --git a/plugin/src/main/java/eu/decentsoftware/holograms/api/utils/reflect/Version.java b/plugin/src/main/java/eu/decentsoftware/holograms/api/utils/reflect/Version.java
+index f02f5e5..7b97cd1 100644
+--- a/plugin/src/main/java/eu/decentsoftware/holograms/api/utils/reflect/Version.java
++++ b/plugin/src/main/java/eu/decentsoftware/holograms/api/utils/reflect/Version.java
+@@ -47,7 +47,12 @@ public enum Version {
+     paper_v1_21_R6(21, Platform.PAPER, "1.21.9", "1.21.10"),
+     v1_21_R7(21, Platform.SPIGOT, "1.21.11"),
+     paper_v1_21_R7(21, Platform.PAPER, "1.21.11"),
+-    v26_1(26, Platform.SPIGOT, "26.1"),
++    v26_1(26, Platform.SPIGOT, "26.1", "26.1.1", "26.1.2"),
++    paper_v26_1(26, Platform.PAPER, "26.1", "26.1.1", "26.1.2"),
++    v26_2(26, Platform.SPIGOT, "26.2"),
++    paper_v26_2(26, Platform.PAPER, "26.2"),
++    v26_3(26, Platform.SPIGOT, "26.3"),
++    paper_v26_3(26, Platform.PAPER, "26.3"),
+     ;
+ 
+     /*
+@@ -76,7 +79,10 @@ public enum Version {
+         // Bukkit version (e.g., 1.20.6-R0.1-SNAPSHOT)
+         String bukkitVersion = Bukkit.getServer().getBukkitVersion();
+         // Minecraft version (e.g., 1.20.6)
+-        return bukkitVersion.split("-", 2)[0];
++        String mcVersion = bukkitVersion.split("-", 2)[0];
++        // keep only the leading numeric version; some forks (e.g. Purpur) report
++        // "26.1.2.build.2592" with a dot-separated build suffix that must be stripped.
++        return mcVersion.replaceFirst("^(\\d+(?:\\.\\d+)*).*$", "$1");
+     }
+ 
+     @Nullable
