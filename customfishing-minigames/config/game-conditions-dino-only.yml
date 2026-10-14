@@ -1,0 +1,24 @@
+# TESTING (mc-dev): the dino runner is the ONLY minigame, for every catch (water, lava, special fish).
+# Replaces the whole game-conditions.yml — restore the previous file when done:
+#   ~/minecraft/plugins-backup-pre-ddr-20261004/game-conditions.pre-dino-only-20261006.yml
+dino_only:
+  list:
+    - dino_easy:+15
+    - dino_normal:+5
+  sub-groups:
+    silver:
+      conditions:
+        group:
+          - silver_star
+      list:
+        - dino_easy:-10
+        - dino_normal:+12
+        - dino_hard:+3
+    golden:
+      conditions:
+        group:
+          - golden_star
+      list:
+        - dino_easy:-15
+        - dino_normal:-2
+        - dino_hard:+7

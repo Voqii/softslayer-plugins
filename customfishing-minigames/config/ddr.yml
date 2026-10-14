@@ -1,0 +1,134 @@
+# DDR-style minigame (game-type: ddr) — needs CustomFishing-DDR in expansions/minigame/.
+# Goes in plugins/CustomFishing/contents/minigame/ddr.yml
+#
+# Arrows scroll right-to-left into the [ ] box. Press the matching key as each one lands.
+#
+# controls: wasd   (default) the movement keys — W ↑  A ←  S ↓  D → (whatever they're bound to,
+#                  so binding the arrow keys to movement in Controls works too). Walking is frozen
+#                  while the game runs (freeze-movement: false to disable).
+#           mouse  ← left click  ↓ sneak  ↑ swap hands (F)  → right click
+#                  (left click only registers while aiming at air/water, not a block)
+#           both   either set
+#
+# Every miss (late, never pressed, or wrong arrow while a note is in the box) costs a life.
+# Clear the whole chart before running out of lives to land the fish.
+#
+# arguments:
+#   notes            number of arrows; "a~b" scales from a to b with the game's difficulty
+#   lanes            track length in cells (cell 0 is the target box)
+#   approach-time    seconds an arrow takes to cross the track (lower = faster scroll)
+#   lead-in          seconds before the first arrow appears
+#   max-gap/min-gap  seconds between arrows at difficulty 0 / 100
+#   half-step-chance chance the next arrow comes in half the gap (never under min-half-step)
+#   long-step-chance chance the next arrow comes after 1.5x the gap
+#   perfect-window / good-window   ± seconds around the beat for PERFECT / GOOD
+#   ping-compensation              shift judgement by the player's ping (capped at max-ping-compensation)
+#   phantom-click-filter           ignore a left click this soon after a right click (rod-use arm swing)
+#
+# Visuals: by default only vanilla font glyphs are used, and every track cell is exactly
+# 12px wide so the track doesn't jitter. When a resource pack is made, override `cells.*`
+# with the pack's glyphs ({color} is replaced by arrow-color.*). `display: subtitle` moves the
+# track to the smaller subtitle line and the status to the title.
+
+ddr_easy:
+  game-type: ddr
+  controls: wasd
+  difficulty: 10~30
+  time: 30
+  display: title
+  arguments:
+    notes: 8~11
+    lanes: 9
+    approach-time: 1.6
+    lead-in: 1.2
+    max-gap: 0.85
+    min-gap: 0.65
+    half-step-chance: 0.0
+    long-step-chance: 0.2
+    perfect-window: 0.10
+    good-window: 0.21
+    lives: 5
+    wrong-arrow-costs-life: true
+    ping-compensation: true
+    max-ping-compensation: 0.25
+
+ddr_normal:
+  game-type: ddr
+  controls: wasd
+  difficulty: 30~60
+  time: 30
+  display: title
+  arguments:
+    notes: 12~16
+    lanes: 9
+    approach-time: 1.3
+    lead-in: 1.0
+    max-gap: 0.65
+    min-gap: 0.48
+    half-step-chance: 0.12
+    long-step-chance: 0.15
+    perfect-window: 0.09
+    good-window: 0.18
+    lives: 4
+    wrong-arrow-costs-life: true
+    ping-compensation: true
+    max-ping-compensation: 0.25
+
+ddr_hard:
+  game-type: ddr
+  controls: wasd
+  difficulty: 60~90
+  time: 30
+  display: title
+  arguments:
+    notes: 16~22
+    lanes: 9
+    approach-time: 1.05
+    lead-in: 1.0
+    max-gap: 0.52
+    min-gap: 0.38
+    half-step-chance: 0.2
+    long-step-chance: 0.1
+    min-half-step: 0.22
+    perfect-window: 0.08
+    good-window: 0.16
+    lives: 3
+    wrong-arrow-costs-life: true
+    ping-compensation: true
+    max-ping-compensation: 0.25
+  # All display options with their defaults (shown on one game; any game can use them):
+  arrow-color:
+    left: '#c77dff'
+    down: '#4cc9f0'
+    up: '#80ed99'
+    right: '#ff6b6b'
+    flash: white
+  cells:
+    left: '<{color}>←</{color}> '
+    down: '<{color}><b>↓ </b></{color}>'
+    up: '<{color}><b>↑ </b></{color}>'
+    right: '<{color}>→</{color}> '
+    empty: '<dark_gray>·</dark_gray><b>  </b>'
+    target-empty: '   '
+  target:
+    idle: '<gray>'
+    perfect: '<gold>'
+    good: '<green>'
+    miss: '<red>'
+  text:
+    perfect: '<gold><b>PERFECT</b>'
+    good: '<green><b>GOOD</b>'
+    miss: '<red><b>MISS</b>'
+    ready: '<yellow>Get ready...'
+    cleared: '<green><b>CLEARED!</b>'
+    full-combo: '<gold><b>FULL COMBO!</b>'
+    failed: '<red><b>It got away...</b>'
+    life: '<red>❤'
+    life-lost: '<dark_gray>❤'
+  status: '{judgement}  <gray>combo <white>{combo}</white>  {lives}'
+  # tip defaults to a key legend matching `controls`
+  # tip: '<color:#c77dff>← <key:key.left></color>  <color:#4cc9f0>↓ <key:key.back></color>  <color:#80ed99>↑ <key:key.forward></color>  <color:#ff6b6b>→ <key:key.right></color>'
+  sound:
+    perfect: minecraft:block.note_block.bell
+    good: minecraft:block.note_block.hat
+    miss: minecraft:block.note_block.bass

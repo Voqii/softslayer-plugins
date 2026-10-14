@@ -1,0 +1,28 @@
+
+# ---- Dino runner minigame (CustomFishing-Dino expansion) ----
+# Normal rotation: any water, alongside tension (ocean) / accurate_click (river) / ddr.
+dino_games:
+  conditions:
+    in-water: true
+    "!group":
+      - special_game
+  list:
+    - dino_easy:+15
+    - dino_normal:+5
+  sub-groups:
+    silver:
+      conditions:
+        group:
+          - silver_star
+      list:
+        - dino_easy:-10
+        - dino_normal:+12
+        - dino_hard:+3
+    golden:
+      conditions:
+        group:
+          - golden_star
+      list:
+        - dino_easy:-15
+        - dino_normal:-2
+        - dino_hard:+7

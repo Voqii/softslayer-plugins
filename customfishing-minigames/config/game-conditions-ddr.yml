@@ -1,0 +1,28 @@
+
+# ---- DDR minigame (CustomFishing-DDR expansion) ----
+# Normal rotation: any water, alongside tension (ocean) / accurate_click (river).
+ddr_games:
+  conditions:
+    in-water: true
+    "!group":
+      - special_game
+  list:
+    - ddr_easy:+15
+    - ddr_normal:+5
+  sub-groups:
+    silver:
+      conditions:
+        group:
+          - silver_star
+      list:
+        - ddr_easy:-10
+        - ddr_normal:+12
+        - ddr_hard:+3
+    golden:
+      conditions:
+        group:
+          - golden_star
+      list:
+        - ddr_easy:-15
+        - ddr_normal:-2
+        - ddr_hard:+7
