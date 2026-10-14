@@ -1,0 +1,7 @@
+name: TagTestHarness
+version: 1.0.0
+main: net.voqii.blsctagstest.TagTestHarness
+api-version: '1.13'
+author: voqii
+description: TEMPORARY test harness for BlockLockerClanTags. Remove after testing.
+depend: [BlockLocker, SimpleClans, BlockLockerClanTags]

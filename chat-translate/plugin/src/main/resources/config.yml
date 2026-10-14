@@ -1,0 +1,20 @@
+# ChatTranslate — shows an English translation under non-English chat messages.
+# Detection, the LLM and the LibreTranslate fallback all live in the mc-translator service.
+
+service-url: "http://127.0.0.1:5100"
+# Give up on a translation after this long (the service itself falls back to LibreTranslate
+# after its own LLM_TIMEOUT, so this is only a last-resort cap).
+timeout-seconds: 20
+
+# How many previous chat lines to send along as context (helps with one-word replies).
+context-lines: 3
+
+# MiniMessage. Placeholders: <lang> (SV/ES/FR...), <name> (sender display name), <translation>
+format: "<dark_gray> ↳ [<gray><lang></gray>] <gray><name></gray>:</dark_gray> <white><translation>"
+# Shown when hovering the translated line. Placeholder: <original>
+hover: "<gray>Original:</gray> <white><original>"
+
+# Show the sender the translation of their own message too.
+show-to-sender: false
+# Log every translation to the server console / latest.log (handy for staff moderation).
+log-to-console: true

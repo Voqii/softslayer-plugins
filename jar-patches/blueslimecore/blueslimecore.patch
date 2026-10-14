@@ -1,0 +1,41 @@
+--- a/com/github/sirblobman/api/utility/VersionUtility.java
++++ b/com/github/sirblobman/api/utility/VersionUtility.java
+@@ -121,8 +121,16 @@
+     @NotNull
+     public static String getMajorMinorVersion() {
+         String minecraftVersion = VersionUtility.getMinecraftVersion();
++        int firstPeriodIndex = minecraftVersion.indexOf(46);
+         int lastPeriodIndex = minecraftVersion.lastIndexOf(46);
+-        return lastPeriodIndex < 2 ? minecraftVersion : minecraftVersion.substring(0, lastPeriodIndex);
++        // Versions with only one dot (e.g. "26.2", post-1.20.x renumbering) are already
++        // "major.minor" - only strip a trailing segment when there's a THIRD component
++        // (e.g. "1.21.5" -> "1.21"). The original lastIndexOf-based check mishandled the
++        // two-segment case, truncating "26.2" down to just "26" and breaking getMajorVersion().
++        if (firstPeriodIndex < 0 || firstPeriodIndex == lastPeriodIndex) {
++            return minecraftVersion;
++        }
++        return minecraftVersion.substring(0, lastPeriodIndex);
+     }
+ 
+     public static int getMajorVersion() {
+@@ -135,6 +143,15 @@
+     public static int getMinorVersion() {
+         String majorMinorVersion = VersionUtility.getMajorMinorVersion();
+         int periodIndex = majorMinorVersion.indexOf(46);
++        String majorPart = majorMinorVersion.substring(0, periodIndex);
++        int major = Integer.parseInt(majorPart);
++        // Post-1.20.x Minecraft versions dropped the leading "1." (e.g. "26.2" instead of
++        // "1.26.2"). Every "getMinorVersion() >= N" gate throughout this codebase actually
++        // means "is this at least MC generation N" - for the new scheme, the first component
++        // IS that generation number, not the second (which is just a patch digit now).
++        if (major != 1) {
++            return major;
++        }
+         int nextIndex = periodIndex + 1;
+         String minorString = majorMinorVersion.substring(nextIndex);
+         return Integer.parseInt(minorString);
+@@ -149,4 +166,3 @@
+         }
+     }
+ }
+-

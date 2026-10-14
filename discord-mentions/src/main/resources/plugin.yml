@@ -1,0 +1,7 @@
+name: DiscordMentions
+version: '1.0.0'
+main: com.voqii.discordmentions.DiscordMentions
+api-version: '26.3'
+depend: [DiscordSRV]
+description: Turns @MinecraftName in game chat into a real Discord ping (via linked accounts) on its way through DiscordSRV.
+author: voqii

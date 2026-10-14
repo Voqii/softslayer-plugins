@@ -1,0 +1,7 @@
+name: BlockLockerClanTags
+version: 1.0.0
+main: net.voqii.blsctags.BlockLockerClanTags
+api-version: '1.13'
+author: voqii
+description: Adds SimpleClans clan-tag matching to BlockLocker protection signs.
+depend: [BlockLocker, SimpleClans]
