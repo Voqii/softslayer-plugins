@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.voqii</groupId>
+    <artifactId>HeadMark</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- Paper API. 1.21.1 is forward-compatible with 1.21.11 / Purpur 26.x for the
+             stable APIs used here (events, ItemMeta lore). Bump the version string if you
+             prefer to compile against your exact server version. -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- MoreMobHeads, used only to compile against MobHeadDropEvent.
+             Provided at runtime via plugin.yml "depend". Drop your running MMH jar at
+             lib/MoreMobHeads.jar (the same jar from your /plugins folder). -->
+        <dependency>
+            <groupId>com.github.joelgodofwar</groupId>
+            <artifactId>MoreMobHeads</artifactId>
+            <version>local</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/MoreMobHeads.jar</systemPath>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>HeadMark-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

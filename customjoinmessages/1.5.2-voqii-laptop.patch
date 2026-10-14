@@ -1,0 +1,112 @@
+diff --git a/README.md b/README.md
+index 10034e0..f003028 100644
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,7 @@ A Minecraft (Paper/Spigot/Purpur) plugin for custom per-player join, leave and A
+ 
+ > Keeps the upstream plugin name `CustomJoinMessages` (and data folder) so it's a
+ > drop-in replacement — existing configs/messages are preserved. The version
+-> `1.5.1-voqii` is how you tell this fork apart from upstream `1.2.1` in `/plugins`.
++> `1.5.2-voqii` is how you tell this fork apart from upstream `1.2.1` in `/plugins`.
+ 
+ This is a fork of [milan252525/CustomJoinMessages](https://github.com/milan252525/CustomJoinMessages)
+ by **milan_25** ([SpigotMC resource](https://www.spigotmc.org/resources/custom-player-join-leave-messages.74263/)).
+@@ -55,6 +55,13 @@ server-wide `custom_afk_message` / `custom_return_message` in `config.yml` if se
+ built-in default. Set `custom_afk_message` if you do want going-AFK announced for
+ everyone. Players can still mute themselves entirely with `/cm toggle`.
+ 
++Per-player custom messages (set via `/cm set afk|return`) are broadcast with a **white**
++`* ` prefix, while the built-in defaults use a **grey** `* `, so you can tell a custom
++message apart from a default at a glance. Default messages substitute the player's
++EssentialsX display name (their coloured nickname when one is set) for `{NAME}` instead of
++the plain username, so default announcements aren't a flat grey name; it falls back to the
++plain name when Essentials has no display name to give.
++
+ Players can silence their own AFK/return broadcast with `/cm toggle afk|return`. The
+ opt-out is stored per-UUID under `silenced.afk` / `silenced.return` (a missing entry
+ means the broadcast is on, which is the default). This pairs with disabling Essentials'
+@@ -87,6 +94,11 @@ own AFK announcements so this plugin is the single source of those messages.
+   default is silent while the return default is announced (`* <name> is no longer AFK.`).
+   The admin default and `/cm toggle` opt-out still take precedence.
+ 
++- **AFK/return formatting polish.** Per-player custom messages now broadcast with a white
++  `* ` prefix to distinguish them from the grey `* ` on the built-in defaults, and default
++  messages substitute the player's EssentialsX display name (coloured nickname when set)
++  for `{NAME}` instead of the plain username.
++
+ > Name resolution checks online players first, then the server's cached offline players
+ > (anyone who has joined before) — no blocking Mojang lookup. If the name has never been
+ > seen on the server, the command reports that instead of acting on a fabricated account.
+diff --git a/pom.xml b/pom.xml
+index 6e11ce5..98847df 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -6,7 +6,7 @@
+ 
+     <groupId>com.milan25</groupId>
+     <artifactId>CustomJoinMessages</artifactId>
+-    <version>1.5.1-voqii</version>
++    <version>1.5.2-voqii</version>
+     <packaging>jar</packaging>
+ 
+     <name>CustomJoinMessages</name>
+diff --git a/src/main/java/com/milan25/customjoinmessages/events/AFKEvents.java b/src/main/java/com/milan25/customjoinmessages/events/AFKEvents.java
+index dfa56ed..530a8f6 100644
+--- a/src/main/java/com/milan25/customjoinmessages/events/AFKEvents.java
++++ b/src/main/java/com/milan25/customjoinmessages/events/AFKEvents.java
+@@ -26,7 +26,9 @@ public class AFKEvents implements Listener {
+     // (paid-tier) message broadcast nothing when they go AFK, but are still announced
+     // on return now that EssentialsX's own AFK broadcasts are turned off.
+     private static final String DEFAULT_AFK_MESSAGE = "";
+-    private static final String DEFAULT_RETURN_MESSAGE = "&7* {NAME} is no longer AFK.";
++    // The trailing &7 re-asserts grey after {NAME}, since the player's Essentials
++    // display name may carry its own colour (a coloured nickname).
++    private static final String DEFAULT_RETURN_MESSAGE = "&7* {NAME}&7 is no longer AFK.";
+ 
+     private final CustomJoinMessages plugin;
+ 
+@@ -51,14 +53,25 @@ public class AFKEvents implements Listener {
+ 
+         String message = this.plugin.getConfig().getString(savedKey + player.getUniqueId(), "");
+ 
+-        if (message.isEmpty()) {
++        if (!message.isEmpty()) {
++            // Per-player custom message: prefix a white asterisk so it visually matches
++            // the grey asterisk on the built-in defaults below.
++            message = "&f* " + message;
++        } else {
+             // No per-player message: fall back to the admin-configured default, and
+             // if that is empty too, to the built-in default so it is never silent.
+             String defaultMessage = this.plugin.getConfig().getString(defaultKey, "");
+             if (defaultMessage.isEmpty()) {
+                 defaultMessage = nowAfk ? DEFAULT_AFK_MESSAGE : DEFAULT_RETURN_MESSAGE;
+             }
+-            message = defaultMessage.replace("{NAME}", player.getName());
++            // Use the player's Essentials display name (their coloured nickname when
++            // set) so default messages aren't a flat grey name; fall back to the
++            // plain name if Essentials hands us nothing.
++            String displayName = event.getAffected().getDisplayName();
++            if (displayName == null || displayName.isEmpty()) {
++                displayName = player.getName();
++            }
++            message = defaultMessage.replace("{NAME}", displayName);
+         }
+ 
+         String prefix = this.plugin.getConfig().getString(prefixKey, "");
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index c65738a..b6efaae 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -16,8 +16,11 @@ custom_afk_message: ""
+ # Set a default prefix for all custom AFK messages.
+ custom_afk_message_prefix: ""
+ 
+-# Default return (no-longer-AFK) message for players who haven't set their own, {NAME} will be replaced with player's name.
++# Default return (no-longer-AFK) message for players who haven't set their own. {NAME} is replaced with the
++# player's EssentialsX display name (their coloured nickname when set), so defaults aren't a flat grey name.
+ # Leave empty to use the built-in default ("* <name> is no longer AFK."); set a value here to override it for everyone.
++# Note: per-player custom messages (set via /cm set) are broadcast with a white "* " prefix; the built-in
++# defaults use a grey "* ".
+ custom_return_message: ""
+ # Set a default prefix for all custom return messages.
+ custom_return_message_prefix: ""
