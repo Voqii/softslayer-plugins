@@ -1,6 +1,10 @@
 name: Doorknob
-version: '1.0.4'
+version: '1.0.5'
 main: com.voqii.doorknob.Doorknob
 api-version: '26.3'
 description: Everyone else sees "I'm a doorknob!" instead of the n-word.
 author: voqii
+permissions:
+  doorknob.see:
+    description: See the real message, marked [Filtered], instead of "I'm a doorknob!"
+    default: op

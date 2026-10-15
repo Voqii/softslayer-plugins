@@ -7,13 +7,13 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 
 ## What's what
 
-| Folder / repo | What it is | Ours or a fork | Status (2026-10-14) |
+| Folder / repo | What it is | Ours or a fork | Status (2026-10-15) |
 |---|---|---|---|
 | [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | `guilds-rebrand` is on the official test server. `dialog-ui` (rivals/wars removed, dialog menus) is in testing. Neither is merged to master. Its `CLAUDE.md` has the full status. |
-| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.4-voqii: join/leave/AFK messages | fork of milan25's plugin | live. `main` is still the old 1.5.1, so build from `26.3-brigadier`. The never-committed 1.5.2 changes are in [`customjoinmessages/`](customjoinmessages). |
+| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.5-voqii: join/leave/AFK messages | fork of milan25's plugin | 1.5.5 (white `*` on custom/paid AFK messages, grey on defaults, coloured nicknames) on the dev server; production still has 1.5.4. `main` is still the old 1.5.1, so build from `26.3-brigadier`. Notes in [`customjoinmessages/`](customjoinmessages). |
 | [`ss-bot/`](ss-bot) | Discord bot that relays guild chat to each guild's own Discord channel | ours | working with SlayerGuilds' bridge |
-| [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.4, confirmed in-game |
-| [`discord-mentions/`](discord-mentions) | `@MinecraftName` in game chat pings the linked Discord user (DiscordSRV add-on) | ours | 1.0.0, loads fine but never tested end to end with a real bot token |
+| [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.5: staff with `doorknob.see` see the real text tagged [Filtered]. 1.0.4 filtering confirmed in-game. |
+| [`discord-mentions/`](discord-mentions) | `@MinecraftName` in game chat pings the linked Discord user, never a same-named stranger (DiscordSRV add-on) | ours | 1.1.0, loads fine but never tested end to end with a real bot token |
 | [`chat-translate/`](chat-translate) | adds an English translation under non-English chat. Plugin + local LLM service (Gemma 3 4B on llama.cpp) | ours | testing on the dev server |
 | [`customfishing-minigames/`](customfishing-minigames) | CustomFishing add-ons: DDR arrow game + Chrome-dino runner | ours (CustomFishing expansions, no fork) | DDR 1.0.2 and Dino 1.0.5 shipped |
 | [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.0.0 (source from the laptop) |
@@ -26,6 +26,8 @@ Everything else on the server (EssentialsX, LuckPerms, WorldGuard, mcMMO, etc.) 
 
 Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 [`deployed-2026-10-14` release](https://github.com/Voqii/softslayer-plugins/releases/tag/deployed-2026-10-14).
+Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-15)
+(Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii).
 No third-party jars are committed or attached. Download those from their own pages.
 
 ## Client mods staff use (separate forks)
