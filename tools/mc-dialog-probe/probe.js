@@ -5,7 +5,7 @@ for (const v of ['26.1', '1.21.11']) { const pr = require('minecraft-data')(v).p
   const fix = (t) => { if (t && t.packet_common_custom_click_action) t.packet_common_custom_click_action = ["container",[{"name":"id","type":"string"},{"name":"nbt","type":["buffer",{"countType":"varint"}]}]]; };
   fix(pr.types); fix(pr.play && pr.play.toServer && pr.play.toServer.types); }
 const steps = JSON.parse(process.argv[2] || '[]');   // [{chat:"/guild"}, {click:"Guild info"}, {wait:2000}]
-const bot = mineflayer.createBot({ host: '127.0.0.1', port: 25599, username: 'DlgTester', version: process.env.V || '26.1', auth: 'offline', physicsEnabled: false });
+const bot = mineflayer.createBot({ host: '127.0.0.1', port: 25599, username: process.env.U || 'DlgTester', version: process.env.V || '26.1', auth: 'offline', physicsEnabled: false });
 bot.physicsEnabled = false;
 { const w = bot._client.write.bind(bot._client);
   bot._client.write = (name, data) => { if (/^(position|position_look|look|flying|player_input|move_player)/.test(name)) return; return w(name, data); }; }
