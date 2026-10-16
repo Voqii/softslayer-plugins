@@ -9,8 +9,9 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 
 | Folder / repo | What it is | Ours or a fork | Status (2026-10-16) |
 |---|---|---|---|
-| [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | `guilds-rebrand` is on the official test server. `dialog-ui` (rivals/wars removed, dialog menus) is in testing. Neither is merged to master. Its `CLAUDE.md` has the full status. |
+| [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | **`dialog-ui` at `a84e494` is the version headed to production** (rivals/wars removed, dialog menus, reworked guild applications: leaders are notified, applications survive restarts). Install and test steps for swapping it in for vanilla SimpleClans: [`slayerguilds/`](slayerguilds). `guilds-rebrand` (older) is on the official test server. Neither is merged to master. Its `CLAUDE.md` has the full status. |
 | [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.5-voqii: join/leave/AFK messages | fork of milan25's plugin | 1.5.5 (white `*` on custom/paid AFK messages, grey on defaults, coloured nicknames) on the dev server; production still has 1.5.4. `main` is still the old 1.5.1, so build from `26.3-brigadier`. Notes in [`customjoinmessages/`](customjoinmessages). |
+| [`slayerguilds/`](slayerguilds) | install guide + test checklist for SlayerGuilds (the code itself is in Voqii/SlayerGuilds) | docs | for `a84e494` |
 | [`ss-bot/`](ss-bot) | Discord bot that relays guild chat to each guild's own Discord channel | ours | working with SlayerGuilds' bridge |
 | [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.5: staff with `doorknob.see` see the real text tagged [Filtered]. 1.0.4 filtering confirmed in-game. |
 | [`slayerbot/`](slayerbot) | chat FAQ bot: answers common questions (discord, money, claims, the end...) plus a few in-jokes. Replaces ancHelperBot | ours (rewrite of Ancienty's ancHelperBot, no code reused) | 2.1.0 confirmed working in-game on the dev server. Its config is converted from production's ancHelperBot config. Remove the ancHelperBot jar when installing, or both will answer. |
@@ -28,8 +29,8 @@ Everything else on the server (EssentialsX, LuckPerms, WorldGuard, mcMMO, etc.) 
 Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 [`deployed-2026-10-14` release](https://github.com/Voqii/softslayer-plugins/releases/tag/deployed-2026-10-14).
 Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-15)
-(Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii), and SlayerBot 2.1.0 is in
-[`built-2026-10-16`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-16).
+(Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii), and SlayerBot 2.1.0 plus SlayerGuilds
+`a84e494` are in [`built-2026-10-16`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-16).
 No third-party jars are committed or attached. Download those from their own pages.
 
 ## Client mods staff use (separate forks)
