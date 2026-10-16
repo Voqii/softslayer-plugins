@@ -1,0 +1,331 @@
+config:
+  version: 1.4
+  # How much should the length of the question asked by player match
+  # with the questions in the database for the plugin to start checking for answers
+  # 70 is quite okay, but if you're having problems with undetected questions, try lowering this to 60.
+  lengthMatch: 65
+  # How much should the words used in the question asked by the player match
+  # with the question for the plugin to give the answer
+  # Please note that, this plugin uses the technique known as 'Bag-of-Words', so
+  # if a player misspells a word, or shortens it (I would = I'd), the matching percentage
+  # will fall greatly, so there may be some undetected questions.
+  # Also please know that 80 is basically 'quite certain' for the plugin to detect questions
+  # however, if you'd like to lower this to 70, it would allow the plugin to detect questions
+  # more easily BUT with more false-positives.
+  questionsMatch: 80
+  # If broadcast is true, then all the players online will see the answer given by the plugin
+  # if it is false, then only the player who asked the question will see the answer.
+  broadcast: true
+  # {question} = returns the question matched in the database.
+  # {newline} = continues in new line.
+  # {answer} = returns the answer matched in the database.
+  format: "&7[&2SlayerBot&7] &f{answer}"
+
+
+questions:
+
+  - is fuse online ANSWER probably not
+  - we're no strangers to love ANSWER You know the rules and so do I
+  - a full commitment's what I'm thinking of ANSWER you wouldn't get this from any other guy
+  - never gonna give you up ANSWER never gonna let you down
+  - never gonna run around and desert you ANSWER never gonna make you cry
+  - never gonna say goodbye ANSWER never gonna tell a lie and hurt you
+  #
+  - Can you claim land ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - How to claim land ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - How do I claim land ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there land claim ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there claims ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there claiming ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there land claim on the server ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there claims on the server ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Is there claiming on the server ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Are there claims ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Does the server have claims ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Does the server have land claim ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  - Are there land claims ANSWER There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you.
+  #
+  - what do you do on this server - ANSWER Our core gameplay is that of a community survival server, so do [/wild] and survive! We also have a lot of minigames and arenas in [/hub] if you get tired of the survival grind.
+  - what do you do on the server - ANSWER Our core gameplay is that of a community survival server, so do [/wild] and survive! We also have a lot of minigames and arenas in [/hub] if you get tired of the survival grind.
+  #
+  - Whats the discord server link ANSWER Do [/discord] for the link to our Discord!
+  - Whats the discord ANSWER Do [/discord] for the link to our Discord!
+  - how to join the discord ANSWER Do [/discord] for the link to our Discord!
+  - where is the discord ANSWER Do [/discord] for the link to our Discord!
+  - is there a discord ANSWER Do [/discord] for the link to our Discord!
+  - does the server have a discord ANSWER Do [/discord] for the link to our Discord!
+  #
+  - How do I make money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How to earn money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How to get money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How do I get money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How do you make money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How do you get money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How to make money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  - How to get more money ANSWER You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub.
+  #
+  - How do I set more homes ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - How to set more homes ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - How to set many homes ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - How to get more homes ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - Am I allowed more than 1 home ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - can I set more homes ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  - how many homes can I set ANSWER Setting more homes is a perk of our vip SS+ rank, read more with [/donate].
+  #
+  - what is ss+ ANSWER SS+ is our vip rank, read more with [/donate].
+  - how to donate ANSWER SS+ is our vip rank, read more with [/donate].
+  - how do I donate ANSWER SS+ is our vip rank, read more with [/donate].
+  - where can i donate ANSWER SS+ is our vip rank, read more with [/donate].
+  - how much does ss+ cost ANSWER SS+ is our vip rank, read more with [/donate].
+  - how much does vip cost ANSWER SS+ is our vip rank, read more with [/donate].
+  - how to get ss+ ANSWER SS+ is our vip rank, read more with [/donate].
+  - how to get vip ANSWER SS+ is our vip rank, read more with [/donate].
+  #
+  - How do skills work ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is excavation ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is herbalism ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is mining ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is woodcutting ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is swords ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is acrobatics ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  - what is repair ANSWER For the MCMMo plugin, you can read more about each skill by doing &a/"skillname" [page]&f.
+  #
+  - How do I lock chests ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - How do I private chests ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - How to lock chests ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - How to lock a chest ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - How to private chests ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - How do I make a chest private ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - how protect chest with sign ANSWER To lock your chests, place a sign on the chest without sneaking.
+  - can i lock chests ANSWER To lock your chests, place a sign on the chest without sneaking.
+  #
+  - How do I apply for staff ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - How do I apply for mod ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - How do I apply for admin ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - How to get admin ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - How to get mod ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - can i get mod ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  - can i get staff ANSWER You have to be a trustworthy player to get staff. Check [/staff].
+  #
+  - is keepinv on ANSWER KeepInventory is on in the overworld (not nether or end).
+  - is keep inv on ANSWER KeepInventory is on in the overworld (not nether or end).
+  - do you keep items ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Is keepinventory on ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Is keep inventory on ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Is there keepinventory ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Is there keep inventory ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Is there keepinv ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Does the server have keepinv ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Does the server have keep inv ANSWER KeepInventory is on in the overworld (not nether or end).
+  - Does the server have keepinventory ANSWER KeepInventory is on in the overworld (not nether or end).
+  #
+  - How do we leave valley ANSWER To leave Death Valley, go to the Crying Obsidian towers left and right of spawn.
+  - How to leave death valley ANSWER To leave Death Valley, go to the Crying Obsidian towers left and right of spawn.
+  - How to leave dv ANSWER To leave Death Valley, go to the Crying Obsidian towers left and right of spawn.
+  - How do we leave valley ANSWER To leave Death Valley, go to the Crying Obsidian towers left and right of spawn.
+  #
+  - how much render distance do you have on the server ANSWER The server has variable render distance depending on the load, but it is usually at 12.
+  - what is the render distance ANSWER The server has variable render distance depending on the load, but it is usually at 12.
+  - whats the render distance ANSWER The server has variable render distance depending on the load, but it is usually at 12.
+  #
+  #- Is there a public xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- Do you have an exp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- Do you have an xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- Is there a public xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- anyone have an xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- anyone have an exp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- how do i get to public xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- where is xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #- where is public xp farm ANSWER There is a public exp raid farm in -200x 700z.
+  #
+  - How do I buy stuff ANSWER Right-click the sign in shops to buy the item.
+  - How do I buy items ANSWER Right-click the sign in shops to buy the item.
+  - How do I buy things ANSWER Right-click the sign in shops to buy the item.
+  - how do i buy things from the shop ANSWER Right-click the sign in shops to buy the item.
+  - how do i buy items from the shop ANSWER Right-click the sign in shops to buy the item.
+  - how do i buy stuff from the shop ANSWER Right-click the sign in shops to buy the item.
+  - How to buy stuff ANSWER Right-click the sign in shops to buy the item.
+  - How to buy items ANSWER Right-click the sign in shops to buy the item.
+  - How to buy things ANSWER Right-click the sign in shops to buy the item.
+  - how to buy things from the shop ANSWER Right-click the sign in shops to buy the item.
+  - how to buy items from the shop ANSWER Right-click the sign in shops to buy the item.
+  - how to buy stuff from the shop ANSWER Right-click the sign in shops to buy the item.
+  #
+  - How do i give money ANSWER Use the command &a/pay&f.
+  - How do i send money ANSWER Use the command &a/pay&f.
+  - How to send money ANSWER Use the command &a/pay&f.
+  - How to give money ANSWER Use the command &a/pay&f.
+  #
+  - where is the world border ANSWER The world border is currently at 12.5k in each direction.
+  - where is the border ANSWER The world border is currently at 12.5k in each direction.
+  - how far is the border ANSWER The world border is currently at 12.5k in each direction.
+  - how far is the world border ANSWER The world border is currently at 12.5k in each direction.
+  - how many blocks is the border ANSWER The world border is currently at 12.5k in each direction.
+  - what is the border ANSWER The world border is currently at 12.5k in each direction.
+  #
+  - how can i make a shop ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how do I get a shop plot ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how do I get a shop ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how do I buy a shop plot ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how do I buy a shop ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how do i go abt making a shop ANSWER To get a shop plot, contact an Emod or an Admin.
+  - how to buy shop plot ANSWER To get a shop plot, contact an Emod or an Admin.
+  - can i buy a shop ANSWER To get a shop plot, contact an Emod or an Admin.
+  #
+  - how old is this server ANSWER SoftSlayer is currently 15 years old!
+  - how long has this server been up for ANSWER SoftSlayer is currently 15 years old!
+  - how old is the server ANSWER SoftSlayer is currently 15 years old!
+  - how many years has the server been up ANSWER SoftSlayer is currently 15 years old!
+  - how long does this server exist ANSWER SoftSlayer is currently 15 years old!
+  #
+  - how does selling stuff work ANSWER Left-click the sign in shops to sell items.
+  - how to sell stuff ANSWER Left-click the sign in shops to sell items.
+  - how do i sell stuff ANSWER Left-click the sign in shops to sell items.
+  #
+  - how to verify clan ANSWER You can verify your clan yourself, but it needs 3 members.
+  - how do i verify clan ANSWER You can verify your clan yourself, but it needs 3 members.
+  #
+  - how to get civilian ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how do i get civilian ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how to rank up ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how do i rank up ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how do i get member ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how to get member ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  - how do i become member ANSWER To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks].
+  #
+  - how do i see how much money i have ANSWER Check your money with [/bal].
+  - how to see how much money i have ANSWER Check your money with [/bal].
+  #
+  - what do I do on this server ANSWER You can explore the [/spawn] or [/hub], or use [/wild] and start surviving!
+  #
+  - does the map reset ANSWER The map will never reset. The border might be expanded with major updates. 
+  - does the world reset ANSWER The map will never reset. The border might be expanded with major updates. 
+  - are there map resets ANSWER The map will never reset. The border might be expanded with major updates. 
+  - are there world resets ANSWER The map will never reset. The border might be expanded with major updates. 
+  - does the server have resets? ANSWER The map will never reset. The border might be expanded with major updates.
+  - does the map have resets? ANSWER The map will never reset. The border might be expanded with major updates.
+  - does the world have resets? ANSWER The map will never reset. The border might be expanded with major updates.
+  #
+  - is there a map ANSWER A live map of the overworld with player positions can be found at [/map]!
+  - how to open map ANSWER A live map of the overworld with player positions can be found at [/map]!
+  - how do i open map ANSWER A live map of the overworld with player positions can be found at [/map]!
+  - what is the link to map ANSWER A live map of the overworld with player positions can be found at [/map]!
+  - where is everyone ANSWER A live map of the overworld with player positions can be found at [/map]!
+  # 
+  - can i team with anyone ANSWER To team, you can look to join a [/clan]. Keep in mind that people might not trust a new player right off the bat.
+  - can i team ANSWER To team, you can look to join a [/clan]. Keep in mind that people might not trust a new player right off the bat.
+  - who wants to team ANSWER To team, you can look to join a [/clan]. Keep in mind that people might not trust a new player right off the bat.
+  #
+  - Can I steal ANSWER Stealing is against the rules! [/rules]
+  - Is stealing allowed ANSWER Stealing is against the rules! [/rules]
+  - Is raiding allowed ANSWER Stealing is against the rules! [/rules]
+  #
+  - Can I grief ANSWER Griefing is against the rules! [/rules]
+  - Is griefing allowed ANSWER Griefing is against the rules! [/rules]
+  - Is grief allowed ANSWER Griefing is against the rules! [/rules]
+  - Can I blow up this base ANSWER Griefing is against the rules! [/rules]
+  #
+  - how to show item ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  - how to show inventory ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  - how to show hand ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  - how to put item in chat ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  - how do you show an item your holding in chat ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  - how do i show item ANSWER Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory.
+  #
+  - is there pvp ANSWER We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley.
+  - is there pvp on the server ANSWER We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley.
+  - where to pvp ANSWER We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley.
+  - do you have pvp ANSWER We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley.
+  - is pvp allowed ANSWER We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley.
+  #
+  - how do i type in adult chat ANSWER To use 18+ chat, start your message with [/a ]!
+  - how do i type in 18+ chat ANSWER To use 18+ chat, start your message with [/a ]!
+  - how to talk in adult chat ANSWER To use 18+ chat, start your message with [/a ]!
+  - how to talk in 18+ chat ANSWER To use 18+ chat, start your message with [/a ]!
+  - how to use adult chat ANSWER To use 18+ chat, start your message with [/a ]!
+  - how to use 18+ chat ANSWER To use 18+ chat, start your message with [/a ]!
+  #
+  - how do i sell ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - where do i sell ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - how do i sell stuff ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - where do i sell stuff ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - how do i sell items ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - where do i sell items ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - how do i sell blocks ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  - where do i sell blocks ANSWER You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!
+  #
+  - is tnt duping allowed ANSWER Tnt duping is not allowed, and does not work on Paper servers like ours.
+  - does tnt duping work ANSWER Tnt duping is not allowed, and does not work on Paper servers like ours.
+  - are tnt duping farms allowed ANSWER Tnt duping is not allowed, and does not work on Paper servers like ours.
+  - can i make a tnt duping farm ANSWER Tnt duping is not allowed, and does not work on Paper servers like ours.
+  #
+  - what is death valley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - what is deathvalley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - what is dv ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - where is death valley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - where is deathvalley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - where is dv ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how do i go to death valley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how do i go to deathvalley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how do i go to dv ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how to go to death valley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how to go to deathvalley ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  - how to go to dv ANSWER Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]
+  #
+  - where is the afk park ANSWER The AFK Park is an enclosed area in Spawn where you can afk to receive money and items!
+  - what is the afk park ANSWER The AFK Park is an enclosed area in Spawn where you can afk to receive money and items!
+  #
+  - how to get to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - how to go to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - how do I get to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - how do i go to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - how do you get to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - how do you go to the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y!   
+  - where is the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - where is the end portal ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - wheres the end portal ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - where is the end ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y!   
+  - end portal coords ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - end portal coords ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  - end portal coords ANSWER To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y! 
+  #
+  - how do I vote ANSWER To vote, use [/vote] and click the links to the sites! If you can not click links in-game, they are also posted on our [/site].
+  - how to vote ANSWER To vote, use [/vote] and click the links to the sites! If you can not click links in-game, they are also posted on our [/site].
+  - where do i go to vote ANSWER To vote, use [/vote] and click the links to the sites! If you can not click links in-game, they are also posted on our [/site].
+  #
+  - are chunk loaders allowed? ANSWER Chunk loaders are not allowed (and they probably do not work regardless).
+  - can you make chunk loaders? ANSWER Chunk loaders are not allowed (and they probably do not work regardless).
+  #
+  - are auto-clickers allowed? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  - are autoclickers allowed? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  - are auto clickers allowed? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  - can you use auto-clickers? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  - can you use autoclickers? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  - can you use auto clickers? ANSWER Auto-clickers are not allowed. Read our [/rules].
+  #
+  - Why cant I move? ANSWER To move, you first have to accept our [/rules]! Use [/next] and [/accept] or click on the chat buttons.
+  #
+  - Can I make a x duper? ANSWER Dupers are not allowed.
+  - Can you make a x duper? ANSWER Dupers are not allowed.
+  #
+  - Is fullbright allowed ANSWER Yes, fullbright is allowed.
+  - can you use fullbright ANSWER Yes, fullbright is allowed.
+  - can I use fullbright ANSWER Yes, fullbright is allowed.
+  #
+  - What is the difficulty level ANSWER The difficulty is set to HARD. The overworld has KeepInventory enabled.
+  - What is the difficulty ANSWER The difficulty is set to HARD. The overworld has KeepInventory enabled.
+  #
+  - Who is admin - ANSWER The admins are JHodges, Perovskite, and MrMatt1981.
+  - Who is emod - ANSWER The emods are 92SkullCrusher92, FunkyTV, SilentSecluder, CombinationZ, hatunemiku, and GrayWandr.
+  - yo yo - ANSWER yo yo
+  #
+
+
+
+
+
+
+
+
+
+

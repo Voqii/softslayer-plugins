@@ -1,0 +1,20 @@
+name: SlayerBot
+version: '2.1.0'
+main: com.voqii.slayerbot.SlayerBot
+api-version: '26.3'
+description: Answers common questions in chat. Rewrite of ancHelperBot.
+author: voqii
+softdepend: [PlaceholderAPI]
+commands:
+  slayerbot:
+    description: SlayerBot admin commands
+    usage: /slayerbot <reload|test|topics>
+    aliases: [helperbot]
+    permission: slayerbot.admin
+permissions:
+  slayerbot.admin:
+    description: Use /slayerbot reload, test and topics
+    default: op
+  slayerbot.ignore:
+    description: Chat from this player never triggers an answer
+    default: false

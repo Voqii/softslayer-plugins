@@ -1,0 +1,75 @@
+# Written after tuning; not used to pick phrasings. Measures how it does on new wording.
+discord | does this server have a discord?
+discord | wat is the discord
+discord | how do i join ur discord
+money | how do you earn money here
+money | best way to get money?
+money | how do i get rich
+homes | how do i set another home
+homes | can i set a second home
+donate | what does ss+ cost
+donate | where do i donate
+land-claims | can i claim land here
+land-claims | is there a claim system
+xp-farm | where can i farm xp
+xp-farm | is there an xp farm?
+keepinventory | do you lose stuff when you die
+keepinventory | is keepinventory enabled
+the-end | how do i find the end
+the-end | where is the stronghold
+vote | how do you vote?
+vote | where can i vote
+sell | where can i sell my stuff
+sell | how do i sell diamonds
+buy | how do you buy from shops
+chest-lock | how do i protect my chest
+chest-lock | how do i lock my stuff
+pvp | is pvp enabled?
+pvp | how do i toggle pvp
+death-valley | where is death valley?
+map-reset | is the map going to reset
+live-map | is there a dynmap
+world-border | how far is the world border?
+pay | how do i give someone money
+balance | how do i check how much money i have
+staff | how do i apply for staff?
+staff | are you guys hiring staff
+rank-up | how do i rank up to member
+show-item | how do i show items in chat
+adult-chat | how do i use adult chat?
+griefing | can i grief people
+stealing | is stealing allowed?
+auto-clickers | is autoclicking allowed
+fullbright | can i use fullbright?
+render-distance | what is the render distance on this server
+the-end | where is the end portal at
+tnt-duping | are tnt dupers allowed
+chunk-loaders | are chunkloaders allowed
+cant-move | why cant i move
+difficulty | what difficulty is the server
+- | i love this server
+- | does anyone want to trade
+- | where did you put my stuff
+- | how do i get to spawn from here
+- | can someone come to my base
+- | anyone selling diamonds?
+- | is the nether dangerous
+- | where can i find villagers
+- | how do i get elytra
+- | who killed me
+- | can i have your stuff
+- | i need money
+- | wanna pvp?
+- | the end is near
+- | is anyone in the end
+- | how do i get to my home
+- | is that a xp farm
+- | my chest got locked
+- | what are you building
+- | how long have you played here
+- | what rank are you
+- | i just got ss+
+- | can you tp to me
+- | what is that
+- | how do you do that
+- | where are the shops
