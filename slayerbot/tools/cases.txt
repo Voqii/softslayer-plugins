@@ -1,0 +1,108 @@
+# expected-topic | message      ("-" = must NOT answer)
+# --- should answer: rewordings, typos, slang
+discord | whats the discord?
+discord | what's the discord link
+discord | is there a discord server
+discord | hey guys is there a discrod
+discord | wheres the discord
+discord | discord link?
+money | how do i get monies
+money | how do u make money on here
+money | how can i earn money
+money | whats the best way to make money
+money | how to get cash
+homes | how do i get more homes
+homes | can i have more than one home
+homes | how many homes can i have
+donate | how much is ss+
+donate | how do i get ss+
+donate | how do i buy vip
+land-claims | can i claim my land
+land-claims | is there land claiming?
+land-claims | how do i claim my base
+land-claims | are there claims on this server
+xp-farm | wheres the xp farm
+xp-farm | is there a public exp farm
+xp-farm | does anyone know where the xp farm is
+keepinventory | is keep inventory on?
+keepinventory | do we keep our items when we die
+keepinventory | is keepinv on in the nether
+the-end | where is the end portal?
+the-end | how do i get to the end
+the-end | wheres the end
+the-end | end portal coords
+vote | how do i vote
+vote | does anyone know how to vote
+sell | where can i sell stuff
+sell | how do i sell items?
+buy | how do i buy stuff
+chest-lock | how do i lock my chest
+chest-lock | how do you lock chests
+pvp | is there pvp?
+pvp | is pvp on
+pvp | can i pvp
+staff | how do i become staff
+staff | how do i become a mod
+death-valley | what is death valley
+death-valley | whats dv
+death-valley | how do i get to dv
+leave-death-valley | how do i leave dv
+leave-death-valley | how do i get out of death valley
+map-reset | will the map reset?
+map-reset | does the world ever reset
+live-map | is there a live map
+world-border | how big is the world border
+world-border | where is the border?
+pay | how do i pay someone
+pay | how do i send someone money
+balance | how do i check my balance
+balance | how do i see my money
+show-item | how do i show my item in chat
+adult-chat | how do i talk in 18+ chat
+auto-clickers | are autoclickers allowed?
+auto-clickers | can i use an auto clicker
+fullbright | is fullbright allowed?
+render-distance | whats the render distance
+server-age | how old is the server?
+rank-up | how do i rank up?
+rank-up | how do i get member rank
+griefing | is griefing allowed?
+stealing | can i steal stuff
+team | can i team with someone
+fuse | is fuse online
+rickroll-1 | we're no strangers to love
+yo-yo | yo yo
+what-to-do | what do you do on this server
+# --- should NOT answer
+- | hi
+- | lol
+- | gg
+- | i have an xp farm
+- | i made so much money today
+- | my discord is broken
+- | anyone want to team up for the xp farm
+- | i'm going to the end
+- | that pvp fight was crazy
+- | who wants to pvp
+- | how do i beat the wither
+- | where is my horse
+- | what is your favorite block
+- | how do i get to your base
+- | can someone help me
+- | is anyone online
+- | how do i craft a beacon
+- | where are you
+- | what time is it
+- | how are you
+- | can i have some diamonds
+- | does anyone have spare iron
+- | where should i build
+- | wanna go mining
+- | is it day or night
+- | how do i make a nether portal
+- | yo
+- | how much is a diamond worth
+- | i sell stuff at my shop
+- | lmao he just died
+- | who is online
+- | what is the seed

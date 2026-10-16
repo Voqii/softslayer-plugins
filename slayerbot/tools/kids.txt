@@ -1,0 +1,92 @@
+# How 8-14 year olds tend to type. Written as a separate test from the EXTRA phrasings in convert.py.
+discord | wats the discord
+discord | discord??
+discord | can u send the dc link
+discord | wher is the discord
+money | how get money
+money | how 2 get mony
+money | how do u get money fast
+money | how do i get monney
+homes | how do i get more sethomes
+homes | y cant i set another home
+donate | how much is ss+ ??
+donate | how do i get vip
+staff | can i be mod
+staff | can i be admin plz
+staff | how do i get admin
+land-claims | how do i protect my house
+land-claims | can ppl break my house
+land-claims | how do i claim my house??
+chest-lock | how do i lock my chest
+chest-lock | can people open my chests
+keepinventory | do i lose my stuff if i die
+keepinventory | is keep inv on
+the-end | where is the end portal??
+the-end | how do i go to the end
+the-end | where is the ender dragon
+the-end | wheres the stronghold
+vote | how 2 vote
+vote | where do i vote
+pvp | y cant i hit people
+pvp | how do i turn pvp on
+pvp | can people kill me
+cant-move | i cant move
+cant-move | y cant i move
+cant-move | why cant i walk
+death-valley | wat is dv
+leave-death-valley | how do i get out of dv
+leave-death-valley | im stuck in dv
+sell | how do i sell dimonds
+sell | where do i sell stuff
+balance | how do i see how much money i have
+pay | how do i give my friend money
+rank-up | how do i rank up
+rank-up | how do i get a better rank
+what-to-do-2 | what do i do
+what-to-do-2 | im new what should i do
+world-border | how big is the world
+map-reset | will the world reset
+griefing | can i grief
+# land-claims' answer ("...players aren't allowed to grief your builds") fits this too
+land-claims | can i break peoples houses
+stealing | can i steal stuff
+team | how do i join a clan
+mcmmo-skills | what is mcmmo
+show-item | how do i show my item
+server-age | how old is this server
+# jokes (exact)
+pfm | PFM where?
+pfm | pfm where
+ibmoc | IBMOC
+ibmoc | ibmoc
+great-power | with great power
+fus-ro | FUS RO
+fus-ro | fus ro
+cavesmith | I'm Cavesmith
+cavesmith | im cavesmith
+cavesmith | I’m Cavesmith
+- | with great power comes great responsibility
+- | fus ro dah
+- | ibmoc lol
+- | hey cavesmith
+# kids chatting, not asking us
+- | can i have ur diamonds
+- | gimme money
+- | can u tp to me
+- | y did u kill me
+- | im so bored
+- | wanna be friends
+- | who wants to be my friend
+- | can someone give me food
+- | im stuck in a hole
+- | i died
+- | lol ur house is ugly
+- | can i come to ur house
+- | wheres ur base
+- | my mom says i have to go
+- | can i have op
+- | how do i get creative mode
+- | im 10
+- | how do i get to ur base
+- | i got 100 money
+- | the end portal is so cool

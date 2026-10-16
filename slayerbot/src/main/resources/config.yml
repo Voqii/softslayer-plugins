@@ -1,0 +1,664 @@
+# SlayerBot - answers common questions in chat.
+# /slayerbot test <message>   shows how a message scores against every topic (use this to tune!)
+# /slayerbot reload           reloads this file
+# Messages that almost matched are logged to near-misses.tsv - read it to find questions to add.
+
+settings:
+  # true = everyone sees the answer, false = only the player who asked.
+  broadcast: true
+  # Wait this long (20 ticks = 1 second) so the answer shows up after the question.
+  delay-ticks: 10
+  # How well a message must match a topic's questions (0-100).
+  # A message counts as a question if it has a "?" or starts with one of the question-words below.
+  threshold: 75
+  # Messages that DON'T look like questions must match almost exactly, so "i have an xp farm"
+  # doesn't get told where the public xp farm is.
+  statement-threshold: 98
+  # Ignore messages shorter than this many words (filler words don't count). Exact topics ignore this.
+  min-words: 2
+  question-words: [how, what, whats, where, wheres, when, why, who, whos, which, is, are, can, could,
+    does, do, did, will, would, should, any, anyone, anybody, someone, wat, wut, whut, wher, hw, howd,
+    whys, isnt, y]
+  cooldown:
+    # The same answer won't be sent again for this long (per player if broadcast is false).
+    topic-seconds: 30
+    # A player can't trigger another answer for this long.
+    player-seconds: 5
+  # {answer}, {question} (the stored question it matched), {player}, {newline}
+  # Legacy &-codes and MiniMessage tags both work, here and in answers.
+  # Answers can also use {years-since:2013} or {years-since:2013-06-01}, and PlaceholderAPI placeholders.
+  format: "&7[&2SlayerBot&7] &f{answer}"
+  # How [/command] in an answer is shown. Clicking it types the command into chat (it never runs it).
+  # {command} = the command, {command-raw} = the same but escaped for use inside '...'
+  command-format: "<hover:show_text:'<gray>Click to type <white>{command}'><click:suggest_command:'{command-raw}'><green>{command}</green></click></hover>"
+  log-near-misses: true
+  # Questions scoring at least this much (but under threshold) are logged.
+  near-miss-score: 55
+
+matching:
+  # Words that are rewritten before matching, both in chat and in the questions below.
+  # Plural "s" and "ing" are stripped automatically, and one-letter typos are forgiven in longer words.
+  aliases:
+    whats: what is
+    wheres: where is
+    whos: who is
+    hows: how is
+    wat: what
+    wut: what
+    whut: what
+    wats: what is
+    wuts: what is
+    wher: where
+    hw: how
+    y: why
+    wanna: want to
+    gimme: give me
+    da: the
+    teh: the
+    dis: this
+    ppl: people
+    mony: money
+    muny: money
+    monney: money
+    dimond: diamond
+    dimonds: diamond
+    diamons: diamond
+    sethome: set home
+    sethomes: set home
+    dc: discord
+    enderdragon: ender dragon
+    u: you
+    ya: you
+    ur: your
+    youre: you are
+    r: are
+    im: i am
+    cant: can not
+    cannot: can not
+    dont: do not
+    doesnt: does not
+    isnt: is not
+    abt: about
+    xp: exp
+    experience: exp
+    keepinv: keep inventory
+    keepinventory: keep inventory
+    inv: inventory
+    dv: death valley
+    deathvalley: death valley
+    autoclicker: auto clicker
+    autoclickers: auto clicker
+    moderator: mod
+    coords: coordinate
+    coordinates: coordinate
+    cash: money
+    coins: money
+    discordlink: discord link
+    # joined-up words
+    autoclick: auto clicker
+    autoclicking: auto clicker
+    chunkloader: chunk loader
+    chunkloaders: chunk loader
+    xpfarm: exp farm
+    endportal: end portal
+    landclaim: land claim
+    # same meaning, different word
+    monies: money
+    rich: money
+    enabled: allowed
+    enable: allow
+    legal: allowed
+    another: more
+    second: more
+    extra: more
+    multiple: more
+    stuff: items
+    things: items
+    toggle: turn
+    find: get to
+    stronghold: end portal
+    dynmap: map
+    bluemap: map
+  # Common words count for less than the words that actually say what the question is about.
+  stop-word-weight: 0.3
+  stop-words: [a, an, the, is, are, am, be, to, of, on, in, at, for, it, this, that, there, here,
+    i, you, we, me, my, your, our, do, does, did, can, could, would, should, will, how, what, where,
+    when, why, who, which, get, go, have, has, with, and, or, any, some, not, server, up, much, many]
+  # Words that are ignored completely.
+  filler-words: [hey, hi, hello, guys, yall, pls, plz, please, um, uh, lol, lmao, bro, so, like,
+    anyone, anybody, someone, know, quick, question, system, ok, okay, just, actually, really, also, btw, idk,
+    bruh, rn, srsly, pls, plss, plzz, "2"]
+
+topics:
+  fuse:
+    answer: "probably not"
+    questions:
+      - "is fuse online"
+  rickroll-1:
+    answer: "You know the rules and so do I"
+    questions:
+      - "we're no strangers to love"
+  rickroll-2:
+    answer: "you wouldn't get this from any other guy"
+    questions:
+      - "a full commitment's what I'm thinking of"
+  rickroll-3:
+    answer: "never gonna let you down"
+    questions:
+      - "never gonna give you up"
+  rickroll-4:
+    answer: "never gonna make you cry"
+    questions:
+      - "never gonna run around and desert you"
+  rickroll-5:
+    answer: "never gonna tell a lie and hurt you"
+    questions:
+      - "never gonna say goodbye"
+  land-claims:
+    answer: "There is &cno land claim,&f but players aren't allowed to grief your builds or steal from you."
+    questions:
+      - "Can you claim land"
+      - "How to claim land"
+      - "How do I claim land"
+      - "Is there land claim"
+      - "Is there claims"
+      - "Is there claiming"
+      - "Is there land claim on the server"
+      - "Is there claims on the server"
+      - "Is there claiming on the server"
+      - "Are there claims"
+      - "Does the server have claims"
+      - "Does the server have land claim"
+      - "Are there land claims"
+      - "how do i claim my base"
+      - "can i claim my base"
+      - "how do i claim my house"
+      - "how do i protect my base"
+      - "how do i protect my house"
+      - "can people break my house"
+      - "how do i stop people from griefing my base"
+  what-to-do:
+    answer: "Our core gameplay is that of a community survival server, so do [/wild] and survive! We also have a lot of minigames and arenas in [/hub] if you get tired of the survival grind."
+    questions:
+      - "what do you do on this server"
+      - "what do you do on the server"
+      - "what is this server about"
+      - "what kind of server is this"
+  discord:
+    answer: "Do [/discord] for the link to our Discord!"
+    questions:
+      - "Whats the discord server link"
+      - "Whats the discord"
+      - "how to join the discord"
+      - "where is the discord"
+      - "is there a discord"
+      - "does the server have a discord"
+      - "discord"
+      - "can i have the discord"
+      - "discord link"
+      - "what is the discord link"
+      - "can you send the discord link"
+  money:
+    answer: "You can make money by selling diamonds at the shops, selling to player-run shops, voting [/vote], and AFKing in the Hub."
+    questions:
+      - "How do I make money"
+      - "How to earn money"
+      - "How to get money"
+      - "How do I get money"
+      - "How do you make money"
+      - "How do you get money"
+      - "How to make money"
+      - "How to get more money"
+      - "whats the best way to make money"
+      - "how can i earn money"
+      - "how do i get money fast"
+      - "where do i get money"
+      - "how do i get rich"
+  homes:
+    answer: "Setting more homes is a perk of our vip SS+ rank, read more with [/donate]."
+    questions:
+      - "How do I set more homes"
+      - "How to set more homes"
+      - "How to set many homes"
+      - "How to get more homes"
+      - "Am I allowed more than 1 home"
+      - "can I set more homes"
+      - "how many homes can I set"
+      - "can i have more than one home"
+      - "how many homes can i have"
+      - "why cant i set another home"
+  donate:
+    answer: "SS+ is our vip rank, read more with [/donate]."
+    questions:
+      - "what is ss+"
+      - "how to donate"
+      - "how do I donate"
+      - "where can i donate"
+      - "how much does ss+ cost"
+      - "how much does vip cost"
+      - "how to get ss+"
+      - "how to get vip"
+      - "how much is ss+"
+      - "how much is vip"
+      - "how do i buy ss+"
+      - "how do i buy vip"
+      - "can i buy a rank"
+      - "how do i buy a rank"
+  mcmmo-skills:
+    answer: "For the MCMMo plugin, you can read more about each skill by doing &a/\"skillname\" [page]&f."
+    questions:
+      - "How do skills work"
+      - "what is excavation"
+      - "what is herbalism"
+      - "what is mining"
+      - "what is woodcutting"
+      - "what is swords"
+      - "what is acrobatics"
+      - "what is repair"
+      - "what is mcmmo"
+      - "what are skills"
+      - "how do i level up my skills"
+  chest-lock:
+    answer: "To lock your chests, place a sign on the chest without sneaking."
+    questions:
+      - "How do I lock chests"
+      - "How do I private chests"
+      - "How to lock chests"
+      - "How to lock a chest"
+      - "How to private chests"
+      - "How do I make a chest private"
+      - "how protect chest with sign"
+      - "can i lock chests"
+      - "how do i protect my chest"
+      - "how do i stop people from opening my chest"
+      - "can people open my chest"
+  staff:
+    answer: "You have to be a trustworthy player to get staff. Check [/staff]."
+    questions:
+      - "How do I apply for staff"
+      - "How do I apply for mod"
+      - "How do I apply for admin"
+      - "How to get admin"
+      - "How to get mod"
+      - "can i get mod"
+      - "can i get staff"
+      - "how do i become staff"
+      - "how do i become a mod"
+      - "are you hiring staff"
+      - "can i be staff"
+      - "can i be a mod"
+      - "can i be admin"
+      - "how do i become admin"
+  keepinventory:
+    answer: "KeepInventory is on in the overworld (not nether or end)."
+    questions:
+      - "is keepinv on"
+      - "is keep inv on"
+      - "do you keep items"
+      - "Is keepinventory on"
+      - "Is keep inventory on"
+      - "Is there keepinventory"
+      - "Is there keep inventory"
+      - "Is there keepinv"
+      - "Does the server have keepinv"
+      - "Does the server have keep inv"
+      - "Does the server have keepinventory"
+      - "do we keep our items when we die"
+      - "do you lose your items when you die"
+      - "do i lose my stuff when i die"
+      - "will i lose my items if i die"
+  leave-death-valley:
+    answer: "To leave Death Valley, go to the Crying Obsidian towers left and right of spawn."
+    questions:
+      - "How do we leave valley"
+      - "How to leave death valley"
+      - "How to leave dv"
+      - "how do i get out of death valley"
+      - "how do i get out of dv"
+      - "how do i get back from death valley"
+      - "im stuck in death valley"
+  render-distance:
+    answer: "The server has variable render distance depending on the load, but it is usually at 12."
+    questions:
+      - "how much render distance do you have on the server"
+      - "what is the render distance"
+      - "whats the render distance"
+      - "why is the render distance so low"
+  xp-farm:
+    enabled: false
+    answer: "There is a public exp raid farm in -200x 700z."
+    questions:
+      - "Is there a public xp farm"
+      - "Do you have an exp farm"
+      - "Do you have an xp farm"
+      - "anyone have an xp farm"
+      - "anyone have an exp farm"
+      - "how do i get to public xp farm"
+      - "where is xp farm"
+      - "where is public xp farm"
+  buy:
+    answer: "Right-click the sign in shops to buy the item."
+    questions:
+      - "How do I buy stuff"
+      - "How do I buy items"
+      - "How do I buy things"
+      - "how do i buy things from the shop"
+      - "how do i buy items from the shop"
+      - "how do i buy stuff from the shop"
+      - "How to buy stuff"
+      - "How to buy items"
+      - "How to buy things"
+      - "how to buy things from the shop"
+      - "how to buy items from the shop"
+      - "how to buy stuff from the shop"
+      - "how do i buy from the shop"
+      - "how do i buy from shops"
+  pay:
+    answer: "Use the command &a/pay&f."
+    questions:
+      - "How do i give money"
+      - "How do i send money"
+      - "How to send money"
+      - "How to give money"
+      - "how do i pay someone"
+      - "how do i send someone money"
+      - "how do i give money to my friend"
+      - "how do i give someone money"
+  world-border:
+    answer: "The world border is currently at 12.5k in each direction."
+    questions:
+      - "where is the world border"
+      - "where is the border"
+      - "how far is the border"
+      - "how far is the world border"
+      - "how many blocks is the border"
+      - "what is the border"
+      - "how big is the world"
+      - "is there a world border"
+      - "how big is the border"
+  shop-plot:
+    answer: "To get a shop plot, contact an Emod or an Admin."
+    questions:
+      - "how can i make a shop"
+      - "how do I get a shop plot"
+      - "how do I get a shop"
+      - "how do I buy a shop plot"
+      - "how do I buy a shop"
+      - "how do i go abt making a shop"
+      - "how to buy shop plot"
+      - "can i buy a shop"
+      - "how do i make my own shop"
+      - "can i have a shop"
+      - "how do i open a shop"
+  server-age:
+    answer: "SoftSlayer is currently 15 years old!"
+    questions:
+      - "how old is this server"
+      - "how long has this server been up for"
+      - "how old is the server"
+      - "how many years has the server been up"
+      - "how long does this server exist"
+      - "when was the server made"
+      - "how long has the server been around"
+  sell:
+    answer: "You can only sell diamonds in the shop spawn, by left-clicking the sign under the diamond!"
+    questions:
+      - "how does selling stuff work"
+      - "how to sell stuff"
+      - "how do i sell stuff"
+      - "how do i sell"
+      - "where do i sell"
+      - "where do i sell stuff"
+      - "how do i sell items"
+      - "where do i sell items"
+      - "how do i sell blocks"
+      - "where do i sell blocks"
+      - "where do i sell my stuff"
+      - "how to sell"
+  clan-verify:
+    answer: "You can verify your clan yourself, but it needs 3 members."
+    questions:
+      - "how to verify clan"
+      - "how do i verify clan"
+  rank-up:
+    answer: "To rank up, you need to meet requirements for voting and mcMMo power level. Check [/ranks]."
+    questions:
+      - "how to get civilian"
+      - "how do i get civilian"
+      - "how to rank up"
+      - "how do i rank up"
+      - "how do i get member"
+      - "how to get member"
+      - "how do i become member"
+      - "how do i get a higher rank"
+      - "how do i get a rank"
+  balance:
+    answer: "Check your money with [/bal]."
+    questions:
+      - "how do i see how much money i have"
+      - "how to see how much money i have"
+      - "how do i check my balance"
+      - "how do i see my money"
+      - "how much money do i have"
+      - "how do i check my money"
+  what-to-do-2:
+    answer: "You can explore the [/spawn] or [/hub], or use [/wild] and start surviving!"
+    questions:
+      - "what do I do on this server"
+      - "what do i do"
+      - "what should i do"
+      - "what do i do now"
+      - "im new what do i do"
+      - "what do i do first"
+  map-reset:
+    answer: "The map will never reset. The border might be expanded with major updates."
+    questions:
+      - "does the map reset"
+      - "does the world reset"
+      - "are there map resets"
+      - "are there world resets"
+      - "does the server have resets?"
+      - "does the map have resets?"
+      - "does the world have resets?"
+      - "will the map reset"
+      - "will the world reset"
+      - "does the world get reset"
+  live-map:
+    answer: "A live map of the overworld with player positions can be found at [/map]!"
+    questions:
+      - "is there a map"
+      - "how to open map"
+      - "how do i open map"
+      - "what is the link to map"
+      - "where is everyone"
+      - "is there a map of the world"
+      - "where can i see the map"
+  team:
+    answer: "To team, you can look to join a [/clan]. Keep in mind that people might not trust a new player right off the bat."
+    questions:
+      - "can i team with anyone"
+      - "can i team"
+      - "who wants to team"
+      - "how do i join a clan"
+      - "can someone team with me"
+  stealing:
+    answer: "Stealing is against the rules! [/rules]"
+    questions:
+      - "Can I steal"
+      - "Is stealing allowed"
+      - "Is raiding allowed"
+      - "can i take other peoples stuff"
+      - "can i rob people"
+  griefing:
+    answer: "Griefing is against the rules! [/rules]"
+    questions:
+      - "Can I grief"
+      - "Is griefing allowed"
+      - "Is grief allowed"
+      - "Can I blow up this base"
+      - "can i break other peoples houses"
+      - "can i destroy peoples houses"
+      - "can i blow up houses"
+  show-item:
+    answer: "Type [i] in chat to show off the item you're holding, or [inv] for your whole inventory."
+    questions:
+      - "how to show item"
+      - "how to show inventory"
+      - "how to show hand"
+      - "how to put item in chat"
+      - "how do you show an item your holding in chat"
+      - "how do i show item"
+  pvp:
+    answer: "We have a Consent PvP system, toggle-able with [/pvp]. There are also PvP arenas like ClassPvP and DeathValley."
+    questions:
+      - "is there pvp"
+      - "is there pvp on the server"
+      - "where to pvp"
+      - "do you have pvp"
+      - "is pvp allowed"
+      - "can i pvp"
+      - "how do i turn on pvp"
+      - "how do i turn off pvp"
+      - "can people kill me"
+      - "why cant i hit people"
+      - "why cant i attack players"
+  adult-chat:
+    answer: "To use 18+ chat, start your message with [/a ]!"
+    questions:
+      - "how do i type in adult chat"
+      - "how do i type in 18+ chat"
+      - "how to talk in adult chat"
+      - "how to talk in 18+ chat"
+      - "how to use adult chat"
+      - "how to use 18+ chat"
+  tnt-duping:
+    answer: "Tnt duping is not allowed, and does not work on Paper servers like ours."
+    questions:
+      - "is tnt duping allowed"
+      - "does tnt duping work"
+      - "are tnt duping farms allowed"
+      - "can i make a tnt duping farm"
+  death-valley:
+    answer: "Death Valley is an arena with respawning lootchests, enabled PvP, strong custom mobs and no keepInventory! [/deathvalley]"
+    questions:
+      - "what is death valley"
+      - "what is deathvalley"
+      - "what is dv"
+      - "where is death valley"
+      - "where is deathvalley"
+      - "where is dv"
+      - "how do i go to death valley"
+      - "how do i go to deathvalley"
+      - "how do i go to dv"
+      - "how to go to death valley"
+      - "how to go to deathvalley"
+      - "how to go to dv"
+      - "what is death valley for"
+  afk-park:
+    answer: "The AFK Park is an enclosed area in Spawn where you can afk to receive money and items!"
+    questions:
+      - "where is the afk park"
+      - "what is the afk park"
+  the-end:
+    answer: "To get to the end, enter the nether from Spawn, and follow the North path until the portal at 15x, -210y!"
+    questions:
+      - "how to get to the end"
+      - "how to go to the end"
+      - "how do I get to the end"
+      - "how do i go to the end"
+      - "how do you get to the end"
+      - "how do you go to the end"
+      - "where is the end"
+      - "where is the end portal"
+      - "wheres the end portal"
+      - "end portal coords"
+      - "where is the ender dragon"
+      - "how do i get to the ender dragon"
+      - "how do i find the end portal"
+  vote:
+    answer: "To vote, use [/vote] and click the links to the sites! If you can not click links in-game, they are also posted on our [/site]."
+    questions:
+      - "how do I vote"
+      - "how to vote"
+      - "where do i go to vote"
+      - "where can i vote"
+      - "how do i vote for the server"
+  chunk-loaders:
+    answer: "Chunk loaders are not allowed (and they probably do not work regardless)."
+    questions:
+      - "are chunk loaders allowed?"
+      - "can you make chunk loaders?"
+  auto-clickers:
+    answer: "Auto-clickers are not allowed. Read our [/rules]."
+    questions:
+      - "are auto-clickers allowed?"
+      - "are autoclickers allowed?"
+      - "are auto clickers allowed?"
+      - "can you use auto-clickers?"
+      - "can you use autoclickers?"
+      - "can you use auto clickers?"
+  cant-move:
+    answer: "To move, you first have to accept our [/rules]! Use [/next] and [/accept] or click on the chat buttons."
+    questions:
+      - "Why cant I move?"
+      - "i cant move"
+      - "i cant walk"
+      - "why cant i walk"
+      - "why am i frozen"
+  dupers:
+    answer: "Dupers are not allowed."
+    questions:
+      - "Can I make a x duper?"
+      - "Can you make a x duper?"
+  fullbright:
+    answer: "Yes, fullbright is allowed."
+    questions:
+      - "Is fullbright allowed"
+      - "can you use fullbright"
+      - "can I use fullbright"
+  difficulty:
+    answer: "The difficulty is set to HARD. The overworld has KeepInventory enabled."
+    questions:
+      - "What is the difficulty level"
+      - "What is the difficulty"
+      - "is it hard mode"
+      - "what difficulty is it"
+  admins:
+    answer: "The admins are JHodges, Perovskite, and MrMatt1981."
+    questions:
+      - "Who is admin"
+  emods:
+    answer: "The emods are 92SkullCrusher92, FunkyTV, SilentSecluder, CombinationZ, hatunemiku, and GrayWandr."
+    questions:
+      - "Who is emod"
+  yo-yo:
+    answer: "yo yo"
+    questions:
+      - "yo yo"
+  pfm:
+    exact: true
+    answer: "On top!"
+    questions:
+      - "PFM where?"
+      - "where is PFM"
+      - "wheres PFM"
+  ibmoc:
+    exact: true
+    answer: "MAS"
+    questions:
+      - "IBMOC"
+  great-power:
+    exact: true
+    answer: "comes great responsibility"
+    questions:
+      - "with great power"
+  fus-ro:
+    exact: true
+    answer: "DAAAHHHH"
+    questions:
+      - "FUS RO"
+  cavesmith:
+    exact: true
+    answer: "I'm Slayerbot"
+    questions:
+      - "I'm Cavesmith"

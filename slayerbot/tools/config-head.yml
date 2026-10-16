@@ -1,0 +1,131 @@
+# SlayerBot - answers common questions in chat.
+# /slayerbot test <message>   shows how a message scores against every topic (use this to tune!)
+# /slayerbot reload           reloads this file
+# Messages that almost matched are logged to near-misses.tsv - read it to find questions to add.
+
+settings:
+  # true = everyone sees the answer, false = only the player who asked.
+  broadcast: true
+  # Wait this long (20 ticks = 1 second) so the answer shows up after the question.
+  delay-ticks: 10
+  # How well a message must match a topic's questions (0-100).
+  # A message counts as a question if it has a "?" or starts with one of the question-words below.
+  threshold: 75
+  # Messages that DON'T look like questions must match almost exactly, so "i have an xp farm"
+  # doesn't get told where the public xp farm is.
+  statement-threshold: 98
+  # Ignore messages shorter than this many words (filler words don't count). Exact topics ignore this.
+  min-words: 2
+  question-words: [how, what, whats, where, wheres, when, why, who, whos, which, is, are, can, could,
+    does, do, did, will, would, should, any, anyone, anybody, someone, wat, wut, whut, wher, hw, howd,
+    whys, isnt, y]
+  cooldown:
+    # The same answer won't be sent again for this long (per player if broadcast is false).
+    topic-seconds: 30
+    # A player can't trigger another answer for this long.
+    player-seconds: 5
+  # {answer}, {question} (the stored question it matched), {player}, {newline}
+  # Legacy &-codes and MiniMessage tags both work, here and in answers.
+  # Answers can also use {years-since:2013} or {years-since:2013-06-01}, and PlaceholderAPI placeholders.
+  format: "&7[&2SlayerBot&7] &f{answer}"
+  # How [/command] in an answer is shown. Clicking it types the command into chat (it never runs it).
+  # {command} = the command, {command-raw} = the same but escaped for use inside '...'
+  command-format: "<hover:show_text:'<gray>Click to type <white>{command}'><click:suggest_command:'{command-raw}'><green>{command}</green></click></hover>"
+  log-near-misses: true
+  # Questions scoring at least this much (but under threshold) are logged.
+  near-miss-score: 55
+
+matching:
+  # Words that are rewritten before matching, both in chat and in the questions below.
+  # Plural "s" and "ing" are stripped automatically, and one-letter typos are forgiven in longer words.
+  aliases:
+    whats: what is
+    wheres: where is
+    whos: who is
+    hows: how is
+    wat: what
+    wut: what
+    whut: what
+    wats: what is
+    wuts: what is
+    wher: where
+    hw: how
+    y: why
+    wanna: want to
+    gimme: give me
+    da: the
+    teh: the
+    dis: this
+    ppl: people
+    mony: money
+    muny: money
+    monney: money
+    dimond: diamond
+    dimonds: diamond
+    diamons: diamond
+    sethome: set home
+    sethomes: set home
+    dc: discord
+    enderdragon: ender dragon
+    u: you
+    ya: you
+    ur: your
+    youre: you are
+    r: are
+    im: i am
+    cant: can not
+    cannot: can not
+    dont: do not
+    doesnt: does not
+    isnt: is not
+    abt: about
+    xp: exp
+    experience: exp
+    keepinv: keep inventory
+    keepinventory: keep inventory
+    inv: inventory
+    dv: death valley
+    deathvalley: death valley
+    autoclicker: auto clicker
+    autoclickers: auto clicker
+    moderator: mod
+    coords: coordinate
+    coordinates: coordinate
+    cash: money
+    coins: money
+    discordlink: discord link
+    # joined-up words
+    autoclick: auto clicker
+    autoclicking: auto clicker
+    chunkloader: chunk loader
+    chunkloaders: chunk loader
+    xpfarm: exp farm
+    endportal: end portal
+    landclaim: land claim
+    # same meaning, different word
+    monies: money
+    rich: money
+    enabled: allowed
+    enable: allow
+    legal: allowed
+    another: more
+    second: more
+    extra: more
+    multiple: more
+    stuff: items
+    things: items
+    toggle: turn
+    find: get to
+    stronghold: end portal
+    dynmap: map
+    bluemap: map
+  # Common words count for less than the words that actually say what the question is about.
+  stop-word-weight: 0.3
+  stop-words: [a, an, the, is, are, am, be, to, of, on, in, at, for, it, this, that, there, here,
+    i, you, we, me, my, your, our, do, does, did, can, could, would, should, will, how, what, where,
+    when, why, who, which, get, go, have, has, with, and, or, any, some, not, server, up, much, many]
+  # Words that are ignored completely.
+  filler-words: [hey, hi, hello, guys, yall, pls, plz, please, um, uh, lol, lmao, bro, so, like,
+    anyone, anybody, someone, know, quick, question, system, ok, okay, just, actually, really, also, btw, idk,
+    bruh, rn, srsly, pls, plss, plzz, "2"]
+
