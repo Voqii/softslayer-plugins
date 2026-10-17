@@ -1,6 +1,6 @@
 # SlayerGuilds — test checklist (dialog menus + 2026-10-16 applications fixes)
 
-Build `2.19.3-SNAPSHOT-720fdfe` (branch `dialog-ui`). Install steps: `INSTALL.md`.
+Build `2.19.3-SNAPSHOT-53a1aa0` (branch `dialog-ui`). Install steps: `INSTALL.md`.
 Needs Purpur/Paper **26.1.2 or newer** (no Spigot).
 
 Use a **non-op** account for most of this, plus one op for section 6. Ops see every button, which hides
@@ -132,7 +132,7 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 
 ## 12. Tax, purge and KDR reset (`720fdfe`)
 
-- [ ] Console on start: `Guild tax — on: $<per-member> per member, min $1,000, max $10,000, every 30d, grace 1 cycle(s).`
+- [ ] Console on start: `Guild tax — on: $1,000 per member, min $1,000, max $10,000, every 30d, grace 1 cycle(s).`
 - [ ] `/guild upkeep` and Guild info → tax: "$X per member a month", the member count, minimum and cap, and the
       monthly tax = members × price, never under $1,000 or over $10,000.
 - [ ] Slayer Score board's info item says "Monthly tax is per member." Each guild's lore shows its tax.
