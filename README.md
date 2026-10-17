@@ -7,13 +7,14 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 
 ## What's what
 
-| Folder / repo | What it is | Ours or a fork | Status (2026-10-16) |
+| Folder / repo | What it is | Ours or a fork | Status (2026-10-17) |
 |---|---|---|---|
 | [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | **`dialog-ui` at `a84e494` is the version headed to production** (rivals/wars removed, dialog menus, reworked guild applications: leaders are notified, applications survive restarts). Install and test steps for swapping it in for vanilla SimpleClans: [`slayerguilds/`](slayerguilds). `guilds-rebrand` (older) is on the official test server. Neither is merged to master. Its `CLAUDE.md` has the full status. |
 | [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.5-voqii: join/leave/AFK messages | fork of milan25's plugin | 1.5.5 (white `*` on custom/paid AFK messages, grey on defaults, coloured nicknames) on the dev server; production still has 1.5.4. `main` is still the old 1.5.1, so build from `26.3-brigadier`. Notes in [`customjoinmessages/`](customjoinmessages). |
 | [`slayerguilds/`](slayerguilds) | install guide + test checklist for SlayerGuilds (the code itself is in Voqii/SlayerGuilds) | docs | for `a84e494` |
 | [`ss-bot/`](ss-bot) | Discord bot that relays guild chat to each guild's own Discord channel | ours | working with SlayerGuilds' bridge |
 | [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.5: staff with `doorknob.see` see the real text tagged [Filtered]. 1.0.4 filtering confirmed in-game. |
+| [`voicechat-discord/`](voicechat-discord) | Discord voice ↔ Simple Voice Chat bridge. `/dvc call` puts a player who has Simple Voice Chat into a Discord voice call (they hear the channel, it hears their mic), and several people can talk on Discord at once | fork of amsam0/voicechat-discord 3.2.1 (MIT) | 3.2.1-call.1. Unit tests, end-to-end tests on a throwaway 26.3 server, and a real-Discord test all pass; installed on the dev server 2026-10-17, not yet tried in game. Needs its own Discord bot. Everything is in its `SS-FORK.md`. |
 | [`slayerbot/`](slayerbot) | chat FAQ bot: answers common questions (discord, money, claims, the end...) plus a few in-jokes. Replaces ancHelperBot | ours (rewrite of Ancienty's ancHelperBot, no code reused) | 2.1.0 confirmed working in-game on the dev server. Its config is converted from production's ancHelperBot config. Remove the ancHelperBot jar when installing, or both will answer. |
 | [`discord-mentions/`](discord-mentions) | `@MinecraftName` in game chat pings the linked Discord user, never a same-named stranger (DiscordSRV add-on) | ours | 1.1.0, loads fine but never tested end to end with a real bot token |
 | [`chat-translate/`](chat-translate) | adds an English translation under non-English chat. Plugin + local LLM service (Gemma 3 4B on llama.cpp) | ours | testing on the dev server |
@@ -31,6 +32,7 @@ Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-15)
 (Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii), and SlayerBot 2.1.0 plus SlayerGuilds
 `a84e494` are in [`built-2026-10-16`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-16).
+voicechat-discord 3.2.1-call.1 is in [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17).
 No third-party jars are committed or attached. Download those from their own pages.
 
 ## Client mods staff use (separate forks)
@@ -56,6 +58,8 @@ The build machine has no JDK or Maven installed. Everything compiles inside Dock
   compile with `eclipse-temurin:25-jdk` against the dev server's `/data/libraries`.
   A Paper/Purpur server jar (paperclip) doesn't contain the API classes. The scripts `docker cp` the libraries out of
   the running server container (`CONTAINER=mc-dev` by default) or take a `LIBS=` path.
+- `voicechat-discord` is Gradle plus a Rust library (Discord voice). Both build in Docker; the steps and its
+  test suites are in `voicechat-discord/SS-FORK.md`.
 - Target Java 21 bytecode (`--release 21`). MC 26.x APIs themselves need a JDK 25 compiler.
 
 ## Things that will bite you
