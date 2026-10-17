@@ -1,6 +1,6 @@
 # SlayerGuilds — test checklist (dialog menus + 2026-10-16 applications fixes)
 
-Build `2.19.3-SNAPSHOT-53a1aa0` (branch `dialog-ui`). Install steps: `INSTALL.md`.
+Build `2.19.3-SNAPSHOT-aa4de8f` (branch `dialog-ui`). Install steps: `INSTALL.md`.
 Needs Purpur/Paper **26.1.2 or newer** (no Spigot).
 
 Use a **non-op** account for most of this, plus one op for section 6. Ops see every button, which hides
@@ -140,3 +140,12 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 - [ ] `/guild admin resetkdr everyone` in game (even as op): refused, "console only". In the console without
       `confirm`: a warning with the player count, nothing reset.
 - [ ] Staff → Server actions has no KDR reset button. Resetting one player's KDR from Player actions still works.
+
+## 13. Guild board posting (`aa4de8f`)
+
+- [ ] As a **trusted non-leader** with no special rank: Guild → Bulletin board has no "Post a message" button,
+      and `/guild bb add hi` is refused ("you must be leader…").
+- [ ] As a leader: posting works from the menu and the command.
+- [ ] Leader gives a rank `bb.add` (Ranks menu or `/guild rank permissions add <rank> bb.add`): a member with
+      that rank can post again.
+- [ ] Staff → guild → "Post bulletin…" still works for staff.
