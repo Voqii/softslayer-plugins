@@ -10,7 +10,7 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | Folder / repo | What it is | Ours or a fork | Status (2026-10-17) |
 |---|---|---|---|
 | [Voqii/SlayerGuilds](https://github.com/Voqii/SlayerGuilds) (separate repo, private) | SimpleClans fork rebranded to Guilds: clan power, warps, Discord bridge, dialog menus | fork of SimpleClans | **`dialog-ui` at `53a1aa0` is the version headed to production** (rivals/wars removed, dialog menus, reworked guild applications: leaders are notified, applications survive restarts; `3819171` fixes a once-a-minute freeze from the Slayer Score reading mcMMO's database on the main thread; `720fdfe` adds per-member guild tax with a $1k minimum and $10k cap, makes unpaid tax → grace → disband the only way a guild ends, and makes "reset everyone's KDR" console-only; `53a1aa0` sets the default per-member price to $1,000). Install and test steps for swapping it in for vanilla SimpleClans: [`slayerguilds/`](slayerguilds). `guilds-rebrand` (older) is on the official test server. Neither is merged to master. Its `CLAUDE.md` has the full status. |
-| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.5-voqii: join/leave/AFK messages | fork of milan25's plugin | 1.5.5 (white `*` on custom/paid AFK messages, grey on defaults, coloured nicknames) on the dev server; production still has 1.5.4. `main` is still the old 1.5.1, so build from `26.3-brigadier`. Notes in [`customjoinmessages/`](customjoinmessages). |
+| [Voqii/minecraft](https://github.com/Voqii/minecraft) (separate repo), branch `26.3-brigadier` | CustomJoinMessages 1.5.5-voqii: join/leave/AFK messages | fork of milan25's plugin | 1.5.5 (white `*` on custom/paid AFK messages, grey on defaults, coloured nicknames) is the current build. `main` is still the old 1.5.1, so build from `26.3-brigadier`. Notes in [`customjoinmessages/`](customjoinmessages). |
 | [`slayerguilds/`](slayerguilds) | install guide + test checklist for SlayerGuilds (the code itself is in Voqii/SlayerGuilds) | docs | for `53a1aa0` |
 | [`ss-bot/`](ss-bot) | Discord bot that relays guild chat to each guild's own Discord channel | ours | working with SlayerGuilds' bridge |
 | [`doorknob/`](doorknob) | chat slur filter: other players see "I'm a doorknob!" | ours | 1.0.5: staff with `doorknob.see` see the real text tagged [Filtered]. 1.0.4 filtering confirmed in-game. |
@@ -21,6 +21,7 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | [`customfishing-minigames/`](customfishing-minigames) | CustomFishing add-ons: DDR arrow game + Chrome-dino runner | ours (CustomFishing expansions, no fork) | DDR 1.0.2 and Dino 1.0.5 shipped |
 | [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.0.0 (source from the laptop) |
 | [`blocklocker-clantags/`](blocklocker-clantags) | lets BlockLocker signs use a clan **tag** instead of the full clan name | ours | 1.0.0 |
+| [`simplestaffchat/`](simplestaffchat) | SimpleStaffChat 4.4.0-voqii: staff, dev and adult chat channels (the "admin chat" channel is the 18+ adult chat) | fork of RefracDevelopment/SimpleStaffChat 4.3.5 (MIT, upstream archived) | runs on 26.3, plus bug and security fixes. `/a` needs a `commands.yml` alias because mcMMO owns it; see its `VOQII-FORK.md` |
 | [`lootchest/`](lootchest) | LootChest 2.5.9-voqii: runs on MC 26.x, per-chest respawn variance, despawn fix, `/lc mute` | fork of Guarmanda/LootChest (GPL-3) | live (`-26.3-mute` jar) |
 | [`jar-patches/`](jar-patches) | one-class fixes injected into BetterSleeping, BlueSlimeCore, DragonDropElytra and LibsDisguises | patches to third-party jars | all were needed for MC 26.2. Check whether upstream has caught up before you re-apply them. |
 | [`tools/mc-dialog-probe/`](tools/mc-dialog-probe) | scripted bot client for testing SlayerGuilds' dialog/chest menus | ours (test tool) | — |
@@ -32,7 +33,7 @@ Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-15)
 (Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii), and SlayerBot 2.1.0 plus SlayerGuilds
 `a84e494` are in [`built-2026-10-16`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-16).
-voicechat-discord 3.2.1-call.1 and SlayerGuilds `3819171` (the lag fix), `720fdfe` (tax/purge) and `53a1aa0` ($1,000 per-member default) are in
+voicechat-discord 3.2.1-call.1 and SlayerGuilds `3819171` (the lag fix) and `53a1aa0` (tax/purge from `720fdfe` + the $1,000 per-member default) are in
 [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17).
 No third-party jars are committed or attached. Download those from their own pages.
 
@@ -47,6 +48,8 @@ FZMM (head/item tools) and its library owo-lib had no builds for MC 26.2/26.3, s
   guard (`a0d374c6`). `voqii/26.3` = Raghav314's 26.3 port + one commit so it publishes locally (`892f7f06`).
 - Build order: owo-lib first (`./gradlew publishToMavenLocal`), then FZMM (`./gradlew build`). FZMM's build looks in
   `mavenLocal()` for `owo-lib 0.13.1+26.3`. Once upstream ships official 26.x builds, use those instead.
+- Brightness Aura 1.6.6 had no 26.3 build either: [`client-mods/brightness-aura/`](client-mods/brightness-aura) has a
+  two-instruction bytecode patch for the 26.2 jar (`python3 patch.py in.class out.class`). Use the official build once it exists.
 
 ## Building
 
