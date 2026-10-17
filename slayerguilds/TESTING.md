@@ -1,6 +1,6 @@
 # SlayerGuilds — test checklist (dialog menus + 2026-10-16 applications fixes)
 
-Build `2.19.3-SNAPSHOT-a84e494` (branch `dialog-ui`). Install steps: `INSTALL.md`.
+Build `2.19.3-SNAPSHOT-3819171` (branch `dialog-ui`). Install steps: `INSTALL.md`.
 Needs Purpur/Paper **26.1.2 or newer** (no Spigot).
 
 Use a **non-op** account for most of this, plus one op for section 6. Ops see every button, which hides
@@ -119,3 +119,13 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 - [ ] `/guild applications list` works for an **unverified** guild and shows each message.
 - [ ] Turning applications off keeps the pending ones in the list.
 - [ ] **Restart the server:** pending applications are still there.
+
+## 11. Slayer Score lag fix (`3819171`)
+
+- [ ] A few seconds after start the console says `Slayer Score: loaded mcMMO levels for N players in X ms
+      (off the main thread)`, from a `Craft Scheduler Thread`, not the `Server thread`.
+- [ ] A spark profile (`/spark profiler`, a few minutes) no longer shows `PowerRecomputeTask` →
+      `FlatFileDatabaseManager.queryByUUID` on the server thread, and the once-a-minute tick spikes are gone.
+- [ ] Slayer Score board and `/guild upkeep` show the same numbers as before (give it a minute after a restart).
+- [ ] Right after a restart, if a guild's tax is due, the console may say `Guild tax: N guild(s) due but their
+      Slayer Score is still loading; retrying next hour.` — that guild gets charged on the next hourly check.
