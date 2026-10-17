@@ -1,6 +1,6 @@
 # SlayerGuilds — install (replacing SimpleClans)
 
-Build `2.19.3-SNAPSHOT-53a1aa0` (branch `dialog-ui`, commit `53a1aa0`, of
+Build `2.19.3-SNAPSHOT-aa4de8f` (branch `dialog-ui`, commit `aa4de8f`, of
 github.com/Voqii/SlayerGuilds). It's a fork of SimpleClans (GPL-3.0).
 
 **It still loads as `SimpleClans`.** The jar's file name doesn't matter. The server reads the name inside it,
@@ -14,7 +14,7 @@ Needs **Paper or Purpur 26.1.2 or newer** (no Spigot). Verified on Purpur 26.3 (
 
 | | |
 |---|---|
-| `SimpleClans-2.19.3-guilds-53a1aa0.jar` | The plugin. Attached to the [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17) release; source in Voqii/SlayerGuilds (private), branch `dialog-ui` |
+| `SimpleClans-2.19.3-guilds-aa4de8f.jar` | The plugin. Attached to the [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17) release; source in Voqii/SlayerGuilds (private), branch `dialog-ui` |
 | `BlockLockerClanTags-1.0.0.jar` | Only if the server runs **BlockLocker**: lets a guild tag on a lock sign give the whole guild access. Source in [`../blocklocker-clantags`](../blocklocker-clantags), jar in the `deployed-2026-10-14` release |
 | Discord bot | Guild chat ↔ Discord (optional, runs outside Minecraft). [`../ss-bot`](../ss-bot) |
 | [`TESTING.md`](TESTING.md) | What to check after installing |
@@ -32,10 +32,10 @@ Needs **Paper or Purpur 26.1.2 or newer** (no Spigot). Verified on Purpur 26.3 (
 3. **Check purge before the first start** (see below). This is the one step that can delete data.
 4. Remove the old SimpleClans jar from `plugins/` (any `SimpleClans*.jar`). Two jars that both call themselves
    SimpleClans make the server load only one of them.
-5. Copy `SimpleClans-2.19.3-guilds-53a1aa0.jar` into `plugins/`, plus `BlockLockerClanTags-1.0.0.jar`
+5. Copy `SimpleClans-2.19.3-guilds-aa4de8f.jar` into `plugins/`, plus `BlockLockerClanTags-1.0.0.jar`
    if the server has BlockLocker.
 6. Edit `plugins/SimpleClans/config.yml` as below, then start the server.
-7. The log should show `Enabling SimpleClans v2.19.3-SNAPSHOT-53a1aa0` with no SimpleClans errors, a
+7. The log should show `Enabling SimpleClans v2.19.3-SNAPSHOT-aa4de8f` with no SimpleClans errors, a
    `Guild tax — on: $… per member, min $1,000, max $10,000…` line, and a few
    seconds later `Slayer Score: loaded mcMMO levels for N players in X ms (off the main thread)`.
    A `WorldGuard6Provider` warning is normal.
@@ -45,7 +45,8 @@ Needs **Paper or Purpur 26.1.2 or newer** (no Spigot). Verified on Purpur 26.3 (
 
 `720fdfe`: guild tax can be per member (the new default), clamped to a minimum and a cap; guilds can no
 longer be wiped by a restart (see Purge); "Reset everyone's KDR" is console-only. `53a1aa0`: the default
-per-member price is $1,000.
+per-member price is $1,000. `aa4de8f`: only leaders can post on the guild board (before, every
+*trusted* member could, from the menu and `/guild bb add`). A leader can still give `bb.add` to a rank.
 
 `3819171` fixes a once-a-minute server freeze: the Slayer Score read every guild member's mcMMO level
 from mcMMO's database on the main thread (a prod spark profile showed ticks up to 2 s). Offline levels are
