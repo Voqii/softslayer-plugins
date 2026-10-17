@@ -6,11 +6,11 @@
 
     <groupId>com.voqii</groupId>
     <artifactId>HeadMark</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -22,13 +22,11 @@
     </repositories>
 
     <dependencies>
-        <!-- Paper API. 1.21.1 is forward-compatible with 1.21.11 / Purpur 26.x for the
-             stable APIs used here (events, ItemMeta lore). Bump the version string if you
-             prefer to compile against your exact server version. -->
+        <!-- Paper API for MC 26.3 (also runs on Purpur 26.3). -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.1-R0.1-SNAPSHOT</version>
+            <version>26.3.build.181-stable</version>
             <scope>provided</scope>
         </dependency>
 
