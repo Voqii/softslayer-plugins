@@ -1,0 +1,150 @@
+plugins {
+    java
+    id("plugin-minotaur")
+    id("plugin-shadow")
+    id("plugin-paperweight")
+}
+
+val platformName = project.name
+
+val archivesBaseName = "${Properties.archivesBaseName}-${platformName}"
+val modrinthVersionName = "Simple Voice Chat Discord Bridge ${Properties.pluginVersion}"
+val modrinthVersionNumber = "${platformName}-${Properties.pluginVersion}"
+
+project.version = Properties.pluginVersion
+project.group = Properties.mavenGroup
+
+Properties.paperSupportedMinecraftVersions.forEach { ver ->
+    val verForTask = ver.replace(".", "_")
+
+    val setupServer = tasks.register<Exec>("setupServer_${verForTask}") {
+        commandLine = listOf("./setup_server.sh", "paper", ver)
+        workingDir = project.rootDir
+
+        dependsOn(tasks.build)
+    }
+
+    tasks.register<JavaExec>("runServer_${verForTask}") {
+        classpath = files("run/$ver/server.jar")
+        maxHeapSize = "1G"
+        systemProperties["Paper.IgnoreJavaVersion"] = "true"
+        args = listOf("--nogui")
+        workingDir = project.projectDir.resolve("run/$ver")
+        standardInput = System.`in` // necessary for console to work
+
+        dependsOn(setupServer)
+    }
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(Properties.javaVersion))
+}
+
+tasks.register<Copy>("processSources") {
+    filteringCharset = Charsets.UTF_8.name()
+
+    val properties = mapOf(
+        "voicechatApiVersion" to Properties.voicechatApiVersion,
+    )
+    inputs.properties(properties)
+
+    from("src/main/java") {
+        include("**/PaperConstants.java")
+
+        expand(properties)
+    }
+    into("build/processedSrc")
+}
+
+tasks.compileJava {
+    options.encoding = Charsets.UTF_8.name()
+
+    options.release.set(Properties.javaVersion)
+
+    val javaSources = sourceSets["main"].allJava.filter {
+        it.name != "PaperConstants.java"
+    }.asFileTree
+
+    val processSources = tasks.getByName<Copy>("processSources")
+    source = javaSources + fileTree(processSources.destinationDir)
+    dependsOn(processSources)
+}
+
+tasks.processResources {
+    filteringCharset = Charsets.UTF_8.name()
+
+    val properties = mapOf(
+        "version" to Properties.pluginVersion,
+        "paperApiVersion" to Properties.paperApiVersion,
+    )
+    inputs.properties(properties)
+
+    filesMatching("plugin.yml") {
+        expand(properties)
+    }
+}
+
+tasks.shadowJar {
+    configurations = listOf(project.configurations.getByName("shadow"))
+    relocate("org.bspfsystems.yamlconfiguration", "dev.amsam0.voicechatdiscord.shadow.yamlconfiguration")
+    relocate("org.yaml.snakeyaml", "dev.amsam0.voicechatdiscord.shadow.snakeyaml")
+    exclude("org/slf4j/**") // added by yamlconfiguration
+
+    archiveBaseName.set(archivesBaseName)
+    archiveClassifier.set("")
+    archiveVersion.set(Properties.pluginVersion)
+
+    from(file("${rootDir}/LICENSE")) {
+        rename { "${it}_${Properties.archivesBaseName}" }
+    }
+}
+
+tasks.jar {
+    archiveBaseName.set(archivesBaseName)
+    archiveClassifier.set("")
+    archiveVersion.set("${Properties.pluginVersion}-raw")
+}
+
+tasks.assemble {
+    dependsOn(tasks.jar.get())
+}
+
+tasks.build {
+    dependsOn(tasks.shadowJar.get())
+}
+
+dependencies {
+    paperweight.paperDevBundle(Properties.paperDevBundleVersion)
+
+    compileOnly("de.maxhenkel.voicechat:voicechat-api:${Properties.voicechatApiVersion}")
+
+    shadow("org.bspfsystems:yamlconfiguration:${Properties.yamlConfigurationVersion}")
+
+    shadow(project(":core"))
+}
+
+repositories {
+    mavenCentral()
+    maven { url = uri("https://oss.sonatype.org/content/repositories/releases/") }
+    maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
+    maven { url = uri("https://maven.maxhenkel.de/repository/public") }
+    maven { url = uri("https://jitpack.io") }
+    mavenLocal()
+}
+
+modrinth {
+    token.set(System.getenv("MODRINTH_TOKEN"))
+    projectId.set(Properties.modrinthProjectId)
+    versionName.set(modrinthVersionName)
+    versionNumber.set(modrinthVersionNumber)
+    changelog.set("")
+    uploadFile.set(tasks.shadowJar)
+    gameVersions.set(Properties.paperSupportedMinecraftVersions)
+    loaders.set(listOf("paper", "purpur", "folia"))
+    versionType.set(Properties.modrinthVersionType)
+    detectLoaders.set(false)
+    debugMode.set(System.getenv("MODRINTH_DEBUG") != null)
+    dependencies {
+        required.project("simple-voice-chat")
+    }
+}

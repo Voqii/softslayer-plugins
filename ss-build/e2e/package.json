@@ -1,0 +1,11 @@
+{
+  "name": "voicechat-discord-e2e",
+  "private": true,
+  "description": "End-to-end tests for the SoftSlayer call-mode fork: a headless Simple Voice Chat client and Discord test bots",
+  "dependencies": {
+    "mineflayer": "^4.39.0",
+    "opusscript": "^0.1.1",
+    "discord.js": "^14.27.0",
+    "@discordjs/voice": "^0.19.2"
+  }
+}

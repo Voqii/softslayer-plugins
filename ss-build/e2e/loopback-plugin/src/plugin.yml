@@ -1,0 +1,6 @@
+name: vcd-loopback-test
+version: '1'
+main: dev.softslayer.vcdloopback.LoopbackPlugin
+api-version: '26.3'
+depend: [ voicechat, voicechat-discord ]
+description: TEST ONLY - loopback call for voicechat-discord's end-to-end tests
