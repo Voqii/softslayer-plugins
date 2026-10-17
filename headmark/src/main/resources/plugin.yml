@@ -1,7 +1,7 @@
 name: HeadMark
-version: 1.0.0
+version: 1.1.0
 main: com.voqii.headmark.HeadMark
-api-version: '1.21'
+api-version: '26.3'
 author: Voqii
 description: Watermarks MoreMobHeads player heads dropped by kills in specific worlds.
 depend: [MoreMobHeads]

@@ -1,7 +1,10 @@
 package com.voqii.headmark;
 
 import com.github.joelgodofwar.mmh.events.MobHeadDropEvent;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -17,8 +20,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * HeadMark — appends a lore "watermark" to MoreMobHeads player heads that are
@@ -33,11 +34,14 @@ import java.util.regex.Pattern;
  */
 public final class HeadMark extends JavaPlugin implements Listener {
 
-    // Matches Bukkit/Spigot hex codes like &#9D9D97
-    private static final Pattern HEX = Pattern.compile("&#([0-9A-Fa-f]{6})");
+    // &-codes plus hex colours written as &#9D9D97
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.builder()
+            .character('&')
+            .hexColors()
+            .build();
 
-    // worldName -> pre-colorized (section-sign) watermark line
-    private final Map<String, String> watermarks = new LinkedHashMap<>();
+    // worldName -> parsed watermark line
+    private final Map<String, Component> watermarks = new LinkedHashMap<>();
     private boolean playerHeadsOnly = true;
 
     @Override
@@ -78,7 +82,7 @@ public final class HeadMark extends JavaPlugin implements Listener {
 
         // Anchor on where the kill happened (victim's world == kill location).
         String worldName = event.getEntity().getWorld().getName();
-        String watermark = watermarks.get(worldName);
+        Component watermark = watermarks.get(worldName);
         if (watermark == null) {
             return; // not a watermarked world
         }
@@ -90,7 +94,7 @@ public final class HeadMark extends JavaPlugin implements Listener {
             return;
         }
 
-        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
+        List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
 
         // Idempotency guard: never stamp the same watermark twice.
         if (!lore.isEmpty() && watermark.equals(lore.get(lore.size() - 1))) {
@@ -98,24 +102,16 @@ public final class HeadMark extends JavaPlugin implements Listener {
         }
 
         lore.add(watermark);
-        meta.setLore(lore);
+        meta.lore(lore);
         head.setItemMeta(meta); // writes back into the shared ItemStack -> survives on the player path
     }
 
-    /** Converts &#RRGGBB hex codes and legacy &-codes into section-sign (§) form. */
-    private String colorize(String input) {
-        Matcher m = HEX.matcher(input);
-        StringBuffer sb = new StringBuffer();
-        while (m.find()) {
-            String hex = m.group(1);
-            StringBuilder rep = new StringBuilder("\u00a7x");
-            for (char c : hex.toCharArray()) {
-                rep.append('\u00a7').append(c);
-            }
-            m.appendReplacement(sb, Matcher.quoteReplacement(rep.toString()));
-        }
-        m.appendTail(sb);
-        return ChatColor.translateAlternateColorCodes('&', sb.toString());
+    /**
+     * Parses &#RRGGBB hex codes and legacy &-codes. Lore is italic unless told otherwise, so
+     * italic is switched off here and only &o turns it on, as the config comments promise.
+     */
+    private Component colorize(String input) {
+        return LEGACY.deserialize(input).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 
     @Override
@@ -123,14 +119,14 @@ public final class HeadMark extends JavaPlugin implements Listener {
         if (command.getName().equalsIgnoreCase("headmark")) {
             if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
                 if (!sender.hasPermission("headmark.reload")) {
-                    sender.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+                    sender.sendMessage(Component.text("You don't have permission to do that.", NamedTextColor.RED));
                     return true;
                 }
                 loadWatermarks();
-                sender.sendMessage(ChatColor.GREEN + "HeadMark reloaded. Worlds: " + watermarks.keySet());
+                sender.sendMessage(Component.text("HeadMark reloaded. Worlds: " + watermarks.keySet(), NamedTextColor.GREEN));
                 return true;
             }
-            sender.sendMessage(ChatColor.GRAY + "Usage: /headmark reload");
+            sender.sendMessage(Component.text("Usage: /headmark reload", NamedTextColor.GRAY));
             return true;
         }
         return false;
