@@ -1,6 +1,6 @@
 # SlayerGuilds — test checklist (dialog menus + 2026-10-16 applications fixes)
 
-Build `2.19.3-SNAPSHOT-3819171` (branch `dialog-ui`). Install steps: `INSTALL.md`.
+Build `2.19.3-SNAPSHOT-720fdfe` (branch `dialog-ui`). Install steps: `INSTALL.md`.
 Needs Purpur/Paper **26.1.2 or newer** (no Spigot).
 
 Use a **non-op** account for most of this, plus one op for section 6. Ops see every button, which hides
@@ -78,7 +78,7 @@ When something's off, note the section number, what you clicked, what you expect
       give/take/set money, rename, recolor tag, permanent, disband (with confirmation).
 - [ ] Player actions: type a name, then kick, make/remove leader, ban/unban, reset KDR, place in a guild, purge
       (with confirmation), look up.
-- [ ] Server actions: reload, global FF allow/auto, collect tax now and reset everyone's KDR (both with confirmation).
+- [ ] Server actions: reload, global FF allow/auto, collect tax now (with confirmation). There is **no** "Reset everyone's KDR" button any more.
 - [ ] Browse opens the old staff chests. Back returns to Staff tools.
 - [ ] A non-staff account doesn't see Staff tools at all.
 
@@ -129,3 +129,14 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 - [ ] Slayer Score board and `/guild upkeep` show the same numbers as before (give it a minute after a restart).
 - [ ] Right after a restart, if a guild's tax is due, the console may say `Guild tax: N guild(s) due but their
       Slayer Score is still loading; retrying next hour.` — that guild gets charged on the next hourly check.
+
+## 12. Tax, purge and KDR reset (`720fdfe`)
+
+- [ ] Console on start: `Guild tax — on: $<per-member> per member, min $1,000, max $10,000, every 30d, grace 1 cycle(s).`
+- [ ] `/guild upkeep` and Guild info → tax: "$X per member a month", the member count, minimum and cap, and the
+      monthly tax = members × price, never under $1,000 or over $10,000.
+- [ ] Slayer Score board's info item says "Monthly tax is per member." Each guild's lore shows its tax.
+- [ ] With purge values set, the console says guild purge is disabled; no guild disappears on restart.
+- [ ] `/guild admin resetkdr everyone` in game (even as op): refused, "console only". In the console without
+      `confirm`: a warning with the player count, nothing reset.
+- [ ] Staff → Server actions has no KDR reset button. Resetting one player's KDR from Player actions still works.
