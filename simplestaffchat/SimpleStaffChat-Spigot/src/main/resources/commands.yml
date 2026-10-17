@@ -1,0 +1,47 @@
+# This is used for automatic file updating purposes
+config-version: '3'
+
+# Any changes here requires a server restart
+commands:
+  staffchat:
+    permission: simplestaffchat.command.staffchat
+    aliases:
+    - s
+  toggle:
+    permission: simplestaffchat.command.toggle
+    aliases:
+    - staffchattoggle
+    - simplestaffchattoggle
+  reload:
+    permission: simplestaffchat.command.reload
+    aliases:
+    - staffchatreload
+    - simplestaffchatreload
+  adminchat:
+    permission: simplestaffchat.command.adminchat
+    aliases:
+    - adult
+    - a
+  admin-toggle:
+    permission: simplestaffchat.command.adminchat.toggle
+    aliases:
+    - adultchat
+    - adultchattoggle
+  devchat:
+    permission: simplestaffchat.command.devchat
+    aliases:
+    - devchat
+  dev-toggle:
+    permission: simplestaffchat.command.devchat.toggle
+    aliases:
+    - devchattoggle
+  chat:
+    permission: simplestaffchat.command.chat
+    aliases:
+    - chat
+  hide:
+    permission: simplestaffchat.command.hide
+    aliases:
+    - staffchathide
+    - schide
+    - scmute
