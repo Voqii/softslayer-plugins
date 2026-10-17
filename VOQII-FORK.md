@@ -36,3 +36,16 @@ Jar: `SimpleStaffChat-Spigot/target/SimpleStaffChat-Spigot-4.4.0-voqii.jar`
 - The sender always sees their own message even without the `.see` permission.
 - Reload honours `commands.reload.aliases` (plus the old `/staffchatreload`, `/screload`), and the prefix
   is re-read on reload.
+
+## Install note: `/a` and mcMMO
+
+mcMMO's plugin.yml claims `/a` (its own admin chat), so the `/a` alias for adult chat never wins. Fix it in the
+server's `commands.yml` (not in this plugin):
+
+    aliases:
+      a:
+      - simplestaffchat:adult $1-
+
+then run `bukkit:reload commands` from the console (plain `reload` hits the vanilla command).
+
+Staff and adult chat are cancelled at LOWEST, so chat filters such as Doorknob never see them.
