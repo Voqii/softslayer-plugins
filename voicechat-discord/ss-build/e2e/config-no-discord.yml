@@ -1,0 +1,6 @@
+bots:
+- token: this-is-not-a-real-token
+  vc_id: 1
+  mode: call
+  name: friends
+debug_level: 1

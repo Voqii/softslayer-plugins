@@ -1,0 +1,17 @@
+name: voicechat-discord
+version: ${version}
+main: dev.amsam0.voicechatdiscord.PaperPlugin
+api-version: ${paperApiVersion}
+prefix: voicechat-discord
+authors: [ "amsam0", "Totobird", "voqii" ]
+description: A plugin to make a bridge between Simple Voice Chat and Discord to allow for players without Simple Voice Chat installed on their client to hear and speak. SoftSlayer fork with call mode (/dvc call) and mixing of overlapping Discord speakers.
+website: https://modrinth.com/mod/simple-voice-chat-discord-bridge
+depend: [ voicechat ]
+folia-supported: true
+permissions:
+  voicechat-discord.call:
+    description: Join Discord calls with /dvc call, and list them with /dvc calls
+    default: op
+  voicechat-discord.reload-config:
+    description: Reload the config with /dvc reloadconfig
+    default: op
