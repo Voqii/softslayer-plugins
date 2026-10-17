@@ -1,0 +1,12 @@
+name: SimpleStaffChat
+version: '${project.version}'
+main: me.refracdevelopment.simplestaffchat.SimpleStaffChat
+api-version: '1.21'
+authors:
+  - RefracDevelopment
+  - Voqii
+softdepend:
+  - PlaceholderAPI
+description: SimpleStaffChat is a plugin that allows you to send messages to your staff members privately. (SoftSlayer fork - "admin chat" is used as the 18+ adult chat)
+website: https://github.com/RefracDevelopment/SimpleStaffChat
+folia-supported: true
