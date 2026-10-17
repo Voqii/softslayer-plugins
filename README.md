@@ -19,7 +19,7 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | [`discord-mentions/`](discord-mentions) | `@MinecraftName` in game chat pings the linked Discord user, never a same-named stranger (DiscordSRV add-on) | ours | 1.1.0, loads fine but never tested end to end with a real bot token |
 | [`chat-translate/`](chat-translate) | adds an English translation under non-English chat. Plugin + local LLM service (Gemma 3 4B on llama.cpp) | ours | testing on the dev server |
 | [`customfishing-minigames/`](customfishing-minigames) | CustomFishing add-ons: DDR arrow game + Chrome-dino runner | ours (CustomFishing expansions, no fork) | DDR 1.0.2 and Dino 1.0.5 shipped |
-| [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.0.0 (source from the laptop) |
+| [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.1.0 for MC 26.3, tested with production's MoreMobHeads 1.0.45 on a throwaway 26.3 server; not installed anywhere yet |
 | [`blocklocker-clantags/`](blocklocker-clantags) | lets BlockLocker signs use a clan **tag** instead of the full clan name | ours | 1.0.0 |
 | [`simplestaffchat/`](simplestaffchat) | SimpleStaffChat 4.4.0-voqii: staff, dev and adult chat channels (the "admin chat" channel is the 18+ adult chat) | fork of RefracDevelopment/SimpleStaffChat 4.3.5 (MIT, upstream archived) | runs on 26.3, plus bug and security fixes. `/a` needs a `commands.yml` alias because mcMMO owns it; see its `VOQII-FORK.md` |
 | [`lootchest/`](lootchest) | LootChest 2.5.9-voqii: runs on MC 26.x, per-chest respawn variance, despawn fix, `/lc mute` | fork of Guarmanda/LootChest (GPL-3) | live (`-26.3-mute` jar) |
@@ -33,7 +33,7 @@ Built jars of our own plugins, as deployed on 2026-10-14, are attached to the
 Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-15)
 (Doorknob 1.0.5, DiscordMentions 1.1.0, CustomJoinMessages 1.5.5-voqii), and SlayerBot 2.1.0 plus SlayerGuilds
 `a84e494` are in [`built-2026-10-16`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-16).
-voicechat-discord 3.2.1-call.1 and SlayerGuilds `3819171` (the lag fix) and `53a1aa0` (tax/purge from `720fdfe` + the $1,000 per-member default) are in
+voicechat-discord 3.2.1-call.1 and SlayerGuilds `3819171` (the lag fix) and `53a1aa0` (tax/purge from `720fdfe` + the $1,000 per-member default), plus HeadMark 1.1.0, are in
 [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17).
 No third-party jars are committed or attached. Download those from their own pages.
 
