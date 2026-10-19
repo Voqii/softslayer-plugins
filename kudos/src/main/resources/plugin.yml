@@ -1,0 +1,25 @@
+name: Kudos
+version: '${project.version}'
+main: de.urbance.Main
+api-version: 1.20
+authors: [ Urbance ]
+website: https://github.com/Urbance
+softdepend: [PlaceholderAPI]
+commands:
+  kudos:
+    description: Opens GUI or shows Kudos from a player
+  kudo:
+    description: Award someone a Kudo
+  kudmin:
+    description: Administrator tools
+permissions:
+  kudos.player.*:
+    description: Allows all kudos user commands
+  kudos.player.gui:
+    description: Allows to open the GUI
+  kudos.player.show:
+    description: Allows viewing of Kudos from other players and itself
+  kudos.player.award:
+    description: Allows the awarding of Kudos
+  kudos.admin.*:
+    description: Allows to execute administrator commands
