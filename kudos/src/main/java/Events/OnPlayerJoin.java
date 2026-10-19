@@ -1,0 +1,69 @@
+package Events;
+
+import Utils.ConfigManagement;
+import Utils.KudosUtils.KudosPlaceholderCache;
+import Utils.SQL.SQLGetter;
+import Utils.WorkaroundManagement;
+import de.urbance.Main;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+
+import java.util.UUID;
+
+public class OnPlayerJoin implements Listener {
+    private Main plugin = Main.getPlugin(Main.class);
+    private FileConfiguration locale;
+
+    public OnPlayerJoin() {
+        locale = ConfigManagement.getLocalesConfig();
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        String prefix = plugin.prefix;
+
+        sendNoDatabaseFoundMessage(player, prefix);
+        sendWorkaroundNeededMessage(player);
+
+        // voqii: the player row upsert is several queries; keep it off the main thread
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            if (!createDatabasePlayer(uuid)) {
+                Bukkit.getLogger().warning(prefix + "An error has occurred: No player could be created in the database. Please contact the system administrator or the developer of the plugin");
+                return;
+            }
+            if (plugin.isConnected && !Main.oldTableScheme) KudosPlaceholderCache.loadAsync(uuid);
+        });
+    }
+
+    private void sendNoDatabaseFoundMessage(Player player, String prefix) {
+        if (!plugin.isConnected && player.hasPermission("kudos.admin.*")) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', prefix + "&cNo database found. If you're trying to connect to a database server please check your credentials in the mysql.yml!"));
+        }
+    }
+
+    private boolean createDatabasePlayer(UUID uuid) {
+        if (!plugin.isConnected) return false;
+        if (Main.oldTableScheme) return true;
+
+        SQLGetter data = new SQLGetter(plugin);
+
+        return data.updatePlayer(uuid);
+    }
+
+    private void sendWorkaroundNeededMessage(Player player) {
+        if (!player.hasPermission("kudos.admin.*")) return;
+        if (WorkaroundManagement.isLegacyConfig) {
+            WorkaroundManagement.notifyInstanceAboutLegacyWorkaround(player);
+            return;
+        }
+        if (WorkaroundManagement.isSQLMigrationNeeded || WorkaroundManagement.isConfigMigrationNeeded)
+            WorkaroundManagement.notifyInstanceAboutWorkaround(player);
+    }
+}

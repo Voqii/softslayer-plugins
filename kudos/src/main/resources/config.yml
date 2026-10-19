@@ -1,0 +1,75 @@
+general-settings:
+  update-notification: true
+  prefix: "&7» &eKudos&7: "
+  use-MySQL: false
+  console-name: "SERVER"
+  debug-mode: false
+kudo-award:
+  general-settings:
+    cooldown: 900
+    enable-reasons: true
+    no-reason-given: "No reason was given"
+    reason-length: 18
+  notification:
+    enabled: true
+    notification-mode: "broadcast"
+    enable-playsound: true
+    playsound-type: "ENTITY_PLAYER_LEVELUP"
+  limitation:
+    enabled: true
+    cooldown: 86400
+    max-kudos-to-receive: 5
+  rewards:
+    items:
+      item-1:
+        enabled: true
+        material: COOKIE
+        use-lore: false
+        item-name: "&6Hot Baked Cookie"
+        item-lore:
+          - "&7Ingredients:"
+          - "&7- Wheat"
+          - "&7- Cocoa Beans"
+        amount: 1
+      item-2:
+        enabled: false
+        material: MILK_BUCKET
+        use-lore: false
+        item-name: "&6Cold milk"
+        item-lore:
+          - "&7Suitable for cookies"
+        amount: 1
+    xp: 0
+    command-rewards:
+      enabled: false
+      commands:
+        - effect give %kudos_player_name% minecraft:speed 600
+  milestones:
+    enabled: true
+    span-between-kudos: 10
+    playsound:
+      enabled: true
+      playsound-type: "ENTITY_FIREWORK_ROCKET_TWINKLE"
+    rewards:
+      items:
+        item-1:
+          enabled: true
+          material: PUMPKIN_PIE
+          use-lore: true
+          item-name: "&6Sweet pumpkin cake"
+          item-lore:
+            - "&7Like at grandma's"
+          amount: 1
+        item-2:
+          enabled: true
+          material: EMERALD
+          use-lore: true
+          item-name: "&2Shimmering Emerald"
+          item-lore:
+            - "&7Handed out to special people"
+          amount: 1
+      xp: 50
+      command-rewards:
+        enabled: false
+        commands:
+          - effect give %kudos_player_name% minecraft:health_boost 600
