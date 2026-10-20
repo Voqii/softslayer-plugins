@@ -1,0 +1,147 @@
+From 5757401dd209270043110bdfbd67178393277e3a Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Mon, 19 Oct 2026 23:33:57 +0000
+Subject: [PATCH 1/2] 2.3.13-voqii: potions in kits load on MC 1.20.5+
+
+PotionType.getByEffect returns the LONG_/STRONG_ variant on modern servers, so
+new PotionData(type, extended, upgraded) threw for most potions (Swiftness,
+Strength, Regeneration, Poison, any level II potion...) and the whole kit
+failed to load in /kp kit and /kp preview. The base potion type is now set by
+name, and new kits save the potion type itself so Turtle Master and plain
+water/awkward bottles survive too. Older kit files still load.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ pom.xml                                       |  2 +-
+ .../kitpvp/item/AttributeParser.java          | 33 +++++++++++++++++--
+ .../kitpvp/item/AttributeWriter.java          | 29 ++++++++++++----
+ 3 files changed, 55 insertions(+), 9 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index 10f59fe..46b5ae8 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -6,7 +6,7 @@
+ 
+     <groupId>com.planetgallium</groupId>
+     <artifactId>KitPvP</artifactId>
+-    <version>2.3.13</version>
++    <version>2.3.13-voqii</version>
+     <packaging>jar</packaging>
+ 
+     <name>${project.artifactId}</name>
+diff --git a/src/main/java/com/planetgallium/kitpvp/item/AttributeParser.java b/src/main/java/com/planetgallium/kitpvp/item/AttributeParser.java
+index acc091f..cdd269c 100644
+--- a/src/main/java/com/planetgallium/kitpvp/item/AttributeParser.java
++++ b/src/main/java/com/planetgallium/kitpvp/item/AttributeParser.java
+@@ -213,10 +213,13 @@ public class AttributeParser {
+         String firstChildEffectName = resource.getConfigurationSection(path).getKeys(false).toArray()[0].toString();
+         String firstChildPath = path + "." + firstChildEffectName;
+ 
+-        PotionType potionType = XPotion.matchXPotion(firstChildEffectName).get().getPotionType();
+         boolean isUpgraded = resource.getBoolean(firstChildPath + ".Upgraded");
+         boolean isExtended = resource.getBoolean(firstChildPath + ".Extended");
+ 
++        // voqii: kits saved by this fork store the potion type's name (TURTLE_MASTER, WATER), older kits the effect name
++        PotionType namedType = Toolkit.versionToNumber() >= 19 ? potionTypeByName(firstChildEffectName) : null;
++        PotionType potionType = namedType != null ? namedType : XPotion.matchXPotion(firstChildEffectName).get().getPotionType();
++
+         if (Toolkit.versionToNumber() == 18) {
+             boolean isSplash = resource.fetchString(path.replace("Effects", "") + ".Type").equals("SPLASH_POTION");
+             Potion potion = Potion.fromItemStack(item);
+@@ -227,7 +230,7 @@ public class AttributeParser {
+ 
+             return potion.toItemStack(item.getAmount());
+         } else if (Toolkit.versionToNumber() >= 19) {
+-            potionMeta.setBasePotionData(new PotionData(potionType, isExtended, isUpgraded));
++            setBasePotion(potionMeta, potionType, isExtended, isUpgraded);
+         }
+ 
+         item.setItemMeta(potionMeta);
+@@ -235,6 +238,32 @@ public class AttributeParser {
+         return item;
+     }
+ 
++    // voqii: on 1.20.5+ the matched PotionType can already be a STRONG_/LONG_ variant (or a potion with no
++    // level II), and new PotionData(type, extended, upgraded=true) then throws "Potion Type is not upgradable",
++    // which killed /kp kit and /kp preview for any kit holding a level II potion. Pick the variant by name.
++    private static void setBasePotion(PotionMeta potionMeta, PotionType potionType, boolean isExtended, boolean isUpgraded) {
++        try {
++            String baseName = potionType.name().replaceFirst("^(STRONG|LONG)_", "");
++            PotionType resolved = null;
++            if (isUpgraded) resolved = potionTypeByName("STRONG_" + baseName);
++            if (resolved == null && isExtended) resolved = potionTypeByName("LONG_" + baseName);
++            if (resolved == null) resolved = potionTypeByName(baseName);
++            potionMeta.setBasePotionType(resolved != null ? resolved : potionType);
++        } catch (NoSuchMethodError legacyApi) {
++            // before 1.20.2 there is no setBasePotionType; PotionData only rejects flags the type can't take
++            potionMeta.setBasePotionData(new PotionData(potionType,
++                    isExtended && potionType.isExtendable(), isUpgraded && potionType.isUpgradeable()));
++        }
++    }
++
++    private static PotionType potionTypeByName(String name) {
++        try {
++            return PotionType.valueOf(name);
++        } catch (IllegalArgumentException e) {
++            return null;
++        }
++    }
++
+     private static void setCustomEffectsFromPath(ItemStack item, Resource resource, String path) {
+         PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
+ 
+diff --git a/src/main/java/com/planetgallium/kitpvp/item/AttributeWriter.java b/src/main/java/com/planetgallium/kitpvp/item/AttributeWriter.java
+index 0fcde08..d8cc390 100644
+--- a/src/main/java/com/planetgallium/kitpvp/item/AttributeWriter.java
++++ b/src/main/java/com/planetgallium/kitpvp/item/AttributeWriter.java
+@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
+ import org.bukkit.inventory.meta.*;
+ import org.bukkit.potion.Potion;
+ import org.bukkit.potion.PotionData;
++import org.bukkit.potion.PotionType;
+ import org.bukkit.potion.PotionEffect;
+ 
+ public class AttributeWriter {
+@@ -98,16 +99,32 @@ public class AttributeWriter {
+                 resource.save();
+ 
+             } else if (Toolkit.versionToNumber() >= 19) {
+-                PotionData data = meta.getBasePotionData();
+-
+-                String effectName = data.getType().getEffectType().getName();
+-                resource.set(effectPath + "." + effectName + ".Upgraded", data.isUpgraded());
+-                resource.set(effectPath + "." + effectName + ".Extended", data.isExtended());
+-                resource.save();
++                serializeBasePotion(resource, meta, effectPath);
+             }
+         }
+     }
+ 
++    // voqii: the effect name loses the potion (Turtle Master saved as SLOWNESS) and water/awkward bottles have no
++    // effect at all (NPE). On 1.20.2+ save the base potion type's own name instead; AttributeParser reads it back.
++    private static void serializeBasePotion(Resource resource, PotionMeta meta, String effectPath) {
++        try {
++            PotionType type = meta.getBasePotionType();
++            if (type == null) return;
++            String name = type.name();
++            String baseName = name.replaceFirst("^(STRONG|LONG)_", "");
++            resource.set(effectPath + "." + baseName + ".Upgraded", name.startsWith("STRONG_"));
++            resource.set(effectPath + "." + baseName + ".Extended", name.startsWith("LONG_"));
++            resource.save();
++        } catch (NoSuchMethodError legacyApi) {
++            PotionData data = meta.getBasePotionData();
++
++            String effectName = data.getType().getEffectType().getName();
++            resource.set(effectPath + "." + effectName + ".Upgraded", data.isUpgraded());
++            resource.set(effectPath + "." + effectName + ".Extended", data.isExtended());
++            resource.save();
++        }
++    }
++
+     private static void serializePotion(Resource resource, ItemStack item, String path) {
+         if (item.getType() == XMaterial.POTION.parseMaterial() ||
+                 (Toolkit.versionToNumber() >= 19 &&
+-- 
+2.43.0
+

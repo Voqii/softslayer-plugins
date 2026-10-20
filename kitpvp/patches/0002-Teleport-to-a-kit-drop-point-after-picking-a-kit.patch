@@ -1,0 +1,155 @@
+From bf0bc00cf845ef1fb2f776c4885e5f4ac2802eba Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Tue, 20 Oct 2026 00:00:40 +0000
+Subject: [PATCH 2/2] Teleport to a kit drop point after picking a kit
+
+/kp adddrop saves a drop point for the current world, /kp deldrops removes
+them. With Arena.TeleportOnKit (default true) a player who picks a kit is sent
+to a random drop point a tick later; worlds without drop points behave as
+before. Arena spawns stay the lobby (entry, death, /kp spawn).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../kitpvp/command/MainCommand.java           | 37 +++++++++++++++++++
+ .../com/planetgallium/kitpvp/game/Arena.java  | 15 ++++++++
+ .../com/planetgallium/kitpvp/game/Kits.java   |  7 ++++
+ src/main/resources/config.yml                 |  3 ++
+ src/main/resources/messages.yml               |  2 +
+ 5 files changed, 64 insertions(+)
+
+diff --git a/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java b/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
+index 60705e9..dc98215 100644
+--- a/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
++++ b/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
+@@ -127,6 +127,14 @@ public class MainCommand implements CommandExecutor {
+                     executeDeleteArenaCommand(p);
+                     return true;
+ 
++                } else if (isCommand(args, sender, "adddrop", "kp.command.addspawn")) {
++                    executeAddDropCommand(p);
++                    return true;
++
++                } else if (isCommand(args, sender, "deldrops", "kp.command.delarena")) {
++                    executeDeleteDropsCommand(p);
++                    return true;
++
+                 } else {
+                     sendUnknownCommand(sender, alias, args);
+                     return true;
+@@ -188,6 +196,8 @@ public class MainCommand implements CommandExecutor {
+         sender.sendMessage(Toolkit.translate("&7- &b/kp addspawn &7Adds a spawn to an arena."));
+         sender.sendMessage(Toolkit.translate("&7- &b/kp arena <arena> &7Teleports you to a different arena."));
+         sender.sendMessage(Toolkit.translate("&7- &b/kp delarena &7Removes an arena."));
++        sender.sendMessage(Toolkit.translate("&7- &b/kp adddrop &7Adds a point players are sent to after picking a kit."));
++        sender.sendMessage(Toolkit.translate("&7- &b/kp deldrops &7Removes this arena's kit drop points."));
+         sender.sendMessage(Toolkit.translate("&7- &b/kp spawn &7Teleports you to the local arena spawn."));
+         sender.sendMessage(Toolkit.translate("&7- &b/kp create <kitName> &7Creates a kit from your inventory."));
+         sender.sendMessage(Toolkit.translate("&7- &b/kp delete <kitName> &7Deletes an existing kit."));
+@@ -437,6 +447,33 @@ public class MainCommand implements CommandExecutor {
+         Toolkit.playSoundToPlayer(p, "ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR", 1);
+     }
+ 
++    private void executeAddDropCommand(Player p) {
++        String arenaName = p.getWorld().getName();
++        int dropNumber = Toolkit.getNextAvailable(config, "Drops." + arenaName,
++                1000, false, 1);
++
++        Toolkit.saveLocationToResource(config, "Drops." + arenaName + "." + dropNumber, p.getLocation());
++
++        p.sendMessage(messages.fetchString("Messages.Commands.AddedDrop")
++                .replace("%number%", String.valueOf(dropNumber))
++                .replace("%arena%", arenaName));
++        Toolkit.playSoundToPlayer(p, "ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR", 1);
++    }
++
++    private void executeDeleteDropsCommand(Player p) {
++        String arenaName = p.getWorld().getName();
++
++        if (config.contains("Drops." + arenaName)) {
++            config.set("Drops." + arenaName, null);
++            config.save();
++
++            p.sendMessage(messages.fetchString("Messages.Commands.RemovedDrops").replace("%arena%", arenaName));
++            Toolkit.playSoundToPlayer(p, "ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR", 1);
++        } else {
++            p.sendMessage(messages.fetchString("Messages.Error.Arena").replace("%arena%", arenaName));
++        }
++    }
++
+     private void executeDeleteArenaCommand(Player p) {
+         String arenaName = p.getWorld().getName();
+ 
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/Arena.java b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+index b2e729b..ec0e730 100644
+--- a/src/main/java/com/planetgallium/kitpvp/game/Arena.java
++++ b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+@@ -180,6 +180,21 @@ public class Arena {
+ 		}
+ 	}
+ 	
++	/** voqii: sends a player who just picked a kit to a random drop point of their world, if it has any. */
++	public void toKitDrop(Player p) {
++		String path = "Drops." + p.getWorld().getName();
++		if (!config.getBoolean("Arena.TeleportOnKit") || !config.contains(path)) {
++			return;
++		}
++
++		List<String> dropKeys = new ArrayList<>(config.getConfigurationSection(path).getKeys(false));
++		if (dropKeys.isEmpty()) {
++			return;
++		}
++
++		p.teleport(Toolkit.getLocationFromResource(config, path + "." + dropKeys.get(random.nextInt(dropKeys.size()))));
++	}
++
+ 	public void updateScoreboards(Player p, boolean hide) {
+ 		Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+ 		String scoreboardTitle = utilties.addPlaceholdersIfPossible(p,
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/Kits.java b/src/main/java/com/planetgallium/kitpvp/game/Kits.java
+index 268858f..9cfa407 100644
+--- a/src/main/java/com/planetgallium/kitpvp/game/Kits.java
++++ b/src/main/java/com/planetgallium/kitpvp/game/Kits.java
+@@ -253,6 +253,13 @@ public class Kits {
+             Toolkit.runCommands(p, kitResource.getStringList("Commands"),
+                     "none", "none");
+         }
++
++        // voqii: a tick later so a kit picked from a sign doesn't teleport the player mid-click
++        Bukkit.getScheduler().runTask(Game.getInstance(), () -> {
++            if (p.isOnline() && playerHasKit(p.getName())) {
++                arena.toKitDrop(p);
++            }
++        });
+     }
+ 
+     private Kit loadKitFromCacheOrCreate(String kitName) {
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 0586fc9..4fe8b0d 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -130,6 +130,9 @@ Arena:
+   DropRemainingOverflowItemsOnKit: true
+   ResetMaxHealthOnDeath: true
+   GameModeOnSpawn: SURVIVAL
++  # Picking a kit teleports you to one of this world's drop points (set with /kp adddrop) if it has any.
++  # Arena spawns (/kp addspawn) stay where you land on entry, after death and with /kp spawn: your lobby.
++  TeleportOnKit: true
+ Other:
+   AutomaticallyAddKitToMenu: true
+   RequireKitPermissions: true
+diff --git a/src/main/resources/messages.yml b/src/main/resources/messages.yml
+index af0101f..52d3ee8 100644
+--- a/src/main/resources/messages.yml
++++ b/src/main/resources/messages.yml
+@@ -14,6 +14,8 @@ Messages:
+     Time: '%prefix% &7Teleporting you in &b%time% seconds&7.'
+     Added: '%prefix% &7Successfully added spawn &b#%number% &7in arena &b&b%arena%&7.'
+     Removed: '%prefix% &7Successfully removed the arena &b%arena%&7.'
++    AddedDrop: '%prefix% &7Successfully added kit drop point &b#%number% &7in arena &b%arena%&7.'
++    RemovedDrops: '%prefix% &7Successfully removed the kit drop points of arena &b%arena%&7.'
+     Reload: '%prefix% &7Successfully reloaded the configurations and cleared caches.'
+     Cleared: '%prefix% &7Your kit has been cleared.'
+     ClearedOther: '%prefix% &7You cleared &b%player%''s &7kit.'
+-- 
+2.43.0
+
