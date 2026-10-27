@@ -1,7 +1,7 @@
-# KitPvP 2.3.13-voqii
+# KitPvP 2.3.15-voqii (SlayerPVP)
 
 Our patches for [jlftt/KitPvP](https://github.com/jlftt/KitPvP), a maintained fork of Cervinakuy's KitPvP.
-Neither repo has a license, so the source isn't copied here: only our two patches, which apply on top of
+Neither repo has a license, so the source isn't copied here: only our three patches, which apply on top of
 jlftt's commit `1833630` (2.3.13). No jar is attached for the same reason. Build it yourself, see below.
 
 ## What the patches do
@@ -26,6 +26,19 @@ in their world:
 That gives the layout: `/kp addspawn` points in the lobby (where you land on entry, after a death, and with
 `/kp spawn`), and `/kp adddrop` points out in the arena.
 
+**`0003` Combat logging and staff inventories (2.3.14 + 2.3.15).**
+
+- Combat logging is built in, so the arena doesn't need CombatLogX. A hit between two players puts both in
+  combat for `Combat.Logout.Seconds` (15). While in combat, `BlockedCommands` (spawn, home, warp, tpa, hub...
+  including `plugin:command` forms) are refused and an action-bar countdown shows. Logging out in an arena while
+  in combat kills you: items drop like any death and the last player who hit you gets the kill and streak. Kicks
+  don't count unless `PunishKicks: true`, and a server shutdown never does. Settings are under `Combat.Logout`
+  in `config.yml`, added automatically. `kp.combatlog.bypass` (default **false**, but `kp.*` in LuckPerms grants
+  it) skips all of it. If CombatLogX also runs in the arena world, add the world to its disabled worlds.
+- `kp.inventory.keep` (default op, and a child of `kp.arena.bypass`): KitPvP never clears your inventory when you
+  join, enter or leave the arena world, respawn, pick a kit or use `/kp spawn`. For staff who come in to watch
+  fights. `/kp clear` still clears.
+
 Upstream 2.3.13 also adds `kp.arena.bypass` (default: op). Players with it keep their inventory, effects and
 gamemode when they enter the arena world.
 
@@ -37,7 +50,7 @@ gamemode when they enter the arena world.
     docker run --rm -u $(id -u):$(id -g) -v "$PWD":/w -w /w maven:3.9-eclipse-temurin-25 \
       mvn -q -B -Dmaven.repo.local=/w/.m2 -DskipTests package
 
-Install `target/KitPvP-2.3.13-voqii.jar`, not the `original-` one.
+Install `target/KitPvP-2.3.15-voqii.jar`, not the `original-` one.
 
 ## Setting it up on SoftSlayer
 

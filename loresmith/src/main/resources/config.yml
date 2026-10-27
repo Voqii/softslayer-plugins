@@ -1,0 +1,28 @@
+# LoreSmith — item name / lore editor using Minecraft's built-in dialog screens (1.21.6+ clients).
+
+# Most lore lines a player can add to one item. Give loresmith.lines.<n> (e.g. loresmith.lines.8)
+# to raise it for a rank; the highest one a player has wins.
+max-lines: 5
+
+# Longest name or lore line, in visible characters (colour codes don't count).
+max-length: 48
+
+# Lore lines LoreSmith didn't write (other plugins' lines like AcuteLoot rarity, HeadMark
+# watermarks, CustomFishing stats, and lines made with Essentials /itemlore before LoreSmith):
+#   locked   - shown but can't be edited, moved or deleted (recommended)
+#   editable - players can edit every line
+unmarked-lines: locked
+
+# Items players can't edit at all. Materials use their Bukkit names (e.g. PLAYER_HEAD).
+blocked-materials: []
+
+# Items carrying data from any of these plugins can't be edited at all (namespace of the
+# item's persistent data, usually the plugin name in lower case), e.g. [customfishing, mythicmobs].
+blocked-namespaces: []
+
+# Darken the world behind the menu (a hidden blindness effect while it's open), because
+# the game itself only dims it a little.
+menu-backdrop: true
+
+# Write every change to plugins/LoreSmith/edits.log (player, item, what changed).
+log-edits: true

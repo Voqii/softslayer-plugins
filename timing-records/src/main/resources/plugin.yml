@@ -1,0 +1,17 @@
+name: TimingRecords
+version: '${project.version}'
+main: com.voqii.timingrecords.TimingRecords
+api-version: '26.3'
+depend: [TimingSystem]
+description: Announces new TimingSystem track records to the whole server.
+author: voqii
+commands:
+  timingrecords:
+    description: Reload TimingRecords or send a test announcement.
+    aliases: [trecords]
+    usage: /timingrecords <reload|test>
+    permission: timingrecords.admin
+permissions:
+  timingrecords.admin:
+    description: /timingrecords reload and test.
+    default: op

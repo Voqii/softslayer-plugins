@@ -1,0 +1,34 @@
+# TimingRecords: announces a new #1 time-trial time on a TimingSystem track to everyone online.
+# Messages use MiniMessage (https://docs.advntr.dev/minimessage/format.html), e.g. <gold>, <bold>, <#ff8800>.
+#
+# Placeholders:
+#   <player>           who set the record
+#   <track>            track display name
+#   <time>             the new record time
+#   <previous_holder>  who held the record before (could be <player> themselves)
+#   <previous_time>    the old record time
+#   <delta>            how much faster the new record is, in seconds (e.g. 0.412)
+
+messages:
+  # Someone beat another player's record.
+  new-record: "<gold>🏁 <yellow><player></yellow> set a new record on <aqua><track></aqua>: <green><time></green> <gray>(<delta>s faster than <previous_holder>)</gray>"
+  # The record holder beat their own record.
+  own-record: "<gold>🏁 <yellow><player></yellow> improved their record on <aqua><track></aqua>: <green><time></green> <gray>(<delta>s faster)</gray>"
+  # The first-ever finish on a track (only used when announce.first-finish is true).
+  first-finish: "<gold>🏁 <yellow><player></yellow> set the first record on <aqua><track></aqua>: <green><time></green>"
+
+announce:
+  # Announce the very first finish on a track that has no times yet.
+  first-finish: false
+  # Announce when the record holder beats their own record.
+  own-record: true
+
+sound:
+  enabled: true
+  # Any sound key, e.g. ui.toast.challenge_complete, entity.player.levelup, block.note_block.bell
+  key: ui.toast.challenge_complete
+  volume: 0.6
+  pitch: 1.0
+
+# Track names (as used in /track commands, or the display name) that never announce. Case-insensitive.
+ignored-tracks: []

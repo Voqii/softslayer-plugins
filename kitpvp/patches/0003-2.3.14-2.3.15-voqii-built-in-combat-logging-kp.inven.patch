@@ -1,0 +1,562 @@
+From 4519d5442be74e08bddcf6a2090f6a60c5b8c569 Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Tue, 27 Oct 2026 03:47:46 +0000
+Subject: [PATCH 3/3] 2.3.14/2.3.15-voqii: built-in combat logging,
+ kp.inventory.keep for staff
+
+2.3.14: a hit tags both players for Combat.Logout.Seconds; while tagged, BlockedCommands are refused and logging out in an arena counts as a death credited to the last attacker. kp.combatlog.bypass skips it (default false).
+
+2.3.15: kp.inventory.keep (default op, child of kp.arena.bypass) stops KitPvP clearing your inventory on join, world entry, leave, respawn, kit pick and /kp spawn.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ pom.xml                                       |   2 +-
+ .../java/com/planetgallium/kitpvp/Game.java   |   1 +
+ .../kitpvp/command/MainCommand.java           |  14 +-
+ .../com/planetgallium/kitpvp/game/Arena.java  |   6 +-
+ .../planetgallium/kitpvp/game/CombatLog.java  | 244 ++++++++++++++++++
+ .../com/planetgallium/kitpvp/game/Kits.java   |   2 +-
+ .../kitpvp/listener/DeathListener.java        |  15 +-
+ .../kitpvp/listener/HitListener.java          |   1 +
+ .../kitpvp/listener/JoinListener.java         |   6 +-
+ .../kitpvp/listener/LeaveListener.java        |   2 +-
+ .../planetgallium/kitpvp/util/Toolkit.java    |   8 +
+ src/main/resources/config.yml                 |  32 +++
+ src/main/resources/plugin.yml                 |   8 +
+ 13 files changed, 330 insertions(+), 11 deletions(-)
+ create mode 100644 src/main/java/com/planetgallium/kitpvp/game/CombatLog.java
+
+diff --git a/pom.xml b/pom.xml
+index 46b5ae8..76bcadc 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -6,7 +6,7 @@
+ 
+     <groupId>com.planetgallium</groupId>
+     <artifactId>KitPvP</artifactId>
+-    <version>2.3.13-voqii</version>
++    <version>2.3.15-voqii</version>
+     <packaging>jar</packaging>
+ 
+     <name>${project.artifactId}</name>
+diff --git a/src/main/java/com/planetgallium/kitpvp/Game.java b/src/main/java/com/planetgallium/kitpvp/Game.java
+index 592ad95..274fdbd 100644
+--- a/src/main/java/com/planetgallium/kitpvp/Game.java
++++ b/src/main/java/com/planetgallium/kitpvp/Game.java
+@@ -65,6 +65,7 @@ public class Game extends JavaPlugin implements Listener {
+ 		pm.registerEvents(new TrackerListener(this), this);
+ 		pm.registerEvents(new MenuListener(this), this);
+ 		pm.registerEvents(getArena().getKillStreaks(), this);
++		pm.registerEvents(getArena().getCombatLog(), this);
+ 		
+ 		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+ 	    getCommand("kitpvp").setExecutor(new MainCommand(this));
+diff --git a/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java b/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
+index dc98215..d4d721c 100644
+--- a/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
++++ b/src/main/java/com/planetgallium/kitpvp/command/MainCommand.java
+@@ -418,7 +418,7 @@ public class MainCommand implements CommandExecutor {
+                     arena.toSpawn(p, p.getWorld().getName());
+ 
+                     if (config.getBoolean("Arena.ClearKitOnCommandSpawn")) {
+-                        clearKit(p);
++                        clearKit(p, !Toolkit.keepsInventory(p));
+                     }
+ 
+                     spawnUsers.remove(p.getName());
+@@ -554,10 +554,16 @@ public class MainCommand implements CommandExecutor {
+     }
+ 
+     private void clearKit(Player p) {
++        clearKit(p, true);
++    }
++
++    private void clearKit(Player p, boolean clearInventory) {
+         CacheManager.getPotionSwitcherUsers().remove(p.getName());
+ 
+-        p.getInventory().setArmorContents(null);
+-        p.getInventory().clear();
++        if (clearInventory) {
++            p.getInventory().setArmorContents(null);
++            p.getInventory().clear();
++        }
+ 
+         Toolkit.setMaxHealth(p, 20);
+         p.setHealth(20.0);
+@@ -566,7 +572,7 @@ public class MainCommand implements CommandExecutor {
+             p.removePotionEffect(effect.getType());
+         }
+ 
+-        if (config.getBoolean("Arena.GiveItemsOnClear")) {
++        if (config.getBoolean("Arena.GiveItemsOnClear") && clearInventory) {
+             arena.giveArenaItems(p);
+         }
+ 
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/Arena.java b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+index ec0e730..76f9944 100644
+--- a/src/main/java/com/planetgallium/kitpvp/game/Arena.java
++++ b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+@@ -33,6 +33,7 @@ public class Arena {
+ 	private final KillStreaks killstreaks;
+ 	private final Cooldowns cooldowns;
+ 	private final Menus menus;
++	private final CombatLog combatLog;
+ 
+ 	public Arena(Game plugin, Resources resources) {
+ 		this.plugin = plugin;
+@@ -52,6 +53,7 @@ public class Arena {
+ 		this.killstreaks = new KillStreaks(resources);
+ 		this.cooldowns = new Cooldowns(plugin, this);
+ 		this.menus = new Menus(resources);
++		this.combatLog = new CombatLog(plugin, this);
+ 	}
+ 	
+ 	// Game mode applied when a player joins or respawns in the arena (Arena.GameModeOnSpawn, SURVIVAL by default)
+@@ -137,7 +139,7 @@ public class Arena {
+ 	}
+ 	
+ 	public void deletePlayer(Player p) {
+-		if (config.getBoolean("Arena.ClearInventoryOnLeave")) {
++		if (config.getBoolean("Arena.ClearInventoryOnLeave") && !Toolkit.keepsInventory(p)) {
+ 			p.getInventory().clear();
+ 			p.getInventory().setArmorContents(null);
+ 		}
+@@ -261,5 +263,7 @@ public class Arena {
+ 	public Cooldowns getCooldowns() { return cooldowns; }
+ 
+ 	public Menus getMenus() { return menus; }
++
++	public CombatLog getCombatLog() { return combatLog; }
+ 	
+ }
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/CombatLog.java b/src/main/java/com/planetgallium/kitpvp/game/CombatLog.java
+new file mode 100644
+index 0000000..06f3661
+--- /dev/null
++++ b/src/main/java/com/planetgallium/kitpvp/game/CombatLog.java
+@@ -0,0 +1,244 @@
++package com.planetgallium.kitpvp.game;
++
++import com.planetgallium.kitpvp.Game;
++import com.planetgallium.kitpvp.util.Resource;
++import com.planetgallium.kitpvp.util.Toolkit;
++import net.md_5.bungee.api.ChatMessageType;
++import net.md_5.bungee.api.chat.TextComponent;
++import org.bukkit.Bukkit;
++import org.bukkit.entity.Player;
++import org.bukkit.event.EventHandler;
++import org.bukkit.event.EventPriority;
++import org.bukkit.event.Listener;
++import org.bukkit.event.entity.PlayerDeathEvent;
++import org.bukkit.event.player.PlayerCommandPreprocessEvent;
++import org.bukkit.event.player.PlayerKickEvent;
++import org.bukkit.event.player.PlayerQuitEvent;
++import org.bukkit.scheduler.BukkitRunnable;
++
++import java.lang.reflect.Method;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.Iterator;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.Set;
++
++/**
++ * Combat logging, handled by KitPvP itself so no separate combat-log plugin is needed in the arena.
++ * <p>
++ * A hit between two players in the arena puts both "in combat" for Combat.Logout.Seconds. While in
++ * combat, the commands in Combat.Logout.BlockedCommands (/spawn, /home, ...) are refused, and leaving
++ * the server kills the player on the spot: their items drop as usual for a death, the last player who
++ * hit them gets the kill (stats, XP, Kill.Commands, kill streak) and the death is announced with
++ * Death.Messages.CombatLog. Kicks (unless Combat.Logout.PunishKicks), a server shutdown and players
++ * with kp.combatlog.bypass are left alone.
++ */
++public class CombatLog implements Listener {
++
++	private final Game plugin;
++	private final Arena arena;
++	private final Resource config;
++
++	/** Player name -> when their combat tag runs out (epoch millis). */
++	private final Map<String, Long> taggedUntil = new HashMap<>();
++	private final Set<String> kicked = new HashSet<>();
++	/** Players being killed for logging out right now (read by the death message). */
++	private final Set<String> loggingOut = new HashSet<>();
++
++	public CombatLog(Game plugin, Arena arena) {
++		this.plugin = plugin;
++		this.arena = arena;
++		this.config = plugin.getResources().getConfig();
++
++		new BukkitRunnable() {
++			@Override
++			public void run() {
++				tick();
++			}
++		}.runTaskTimer(plugin, 20L, 20L);
++	}
++
++	private boolean enabled() {
++		return !config.contains("Combat.Logout.Enabled") || config.getBoolean("Combat.Logout.Enabled");
++	}
++
++	private int seconds() {
++		return config.contains("Combat.Logout.Seconds") ? Math.max(1, config.getInt("Combat.Logout.Seconds")) : 15;
++	}
++
++	/** Called for every landed hit between two players in the arena. */
++	public void tag(Player victim, Player attacker) {
++		if (!enabled()) {
++			return;
++		}
++		tagOne(victim);
++		tagOne(attacker);
++	}
++
++	private void tagOne(Player p) {
++		if (p.hasPermission("kp.combatlog.bypass")) {
++			return;
++		}
++		boolean wasTagged = isTagged(p.getName());
++		taggedUntil.put(p.getName(), System.currentTimeMillis() + seconds() * 1000L);
++		if (!wasTagged) {
++			send(p, "Combat.Logout.TagMessage");
++		}
++	}
++
++	public boolean isTagged(String name) {
++		Long until = taggedUntil.get(name);
++		return until != null && until > System.currentTimeMillis();
++	}
++
++	private int secondsLeft(String name) {
++		Long until = taggedUntil.get(name);
++		return until == null ? 0 : (int) Math.max(0, Math.ceil((until - System.currentTimeMillis()) / 1000.0));
++	}
++
++	public boolean isLoggingOut(String name) {
++		return loggingOut.contains(name);
++	}
++
++	/** Every second: the action bar countdown, and the "no longer in combat" message when it ends. */
++	private void tick() {
++		boolean actionBar = !config.contains("Combat.Logout.ActionBar") || config.getBoolean("Combat.Logout.ActionBar");
++		Iterator<Map.Entry<String, Long>> it = taggedUntil.entrySet().iterator();
++		while (it.hasNext()) {
++			Map.Entry<String, Long> e = it.next();
++			Player p = Bukkit.getPlayerExact(e.getKey());
++			if (p == null) {
++				it.remove();
++				continue;
++			}
++			if (e.getValue() <= System.currentTimeMillis()) {
++				it.remove();
++				send(p, "Combat.Logout.UntagMessage");
++				if (actionBar) {
++					p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(""));
++				}
++			} else if (actionBar && config.contains("Combat.Logout.ActionBarText")) {
++				String text = config.fetchString("Combat.Logout.ActionBarText")
++						.replace("%seconds%", String.valueOf(secondsLeft(e.getKey())));
++				p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(Toolkit.translate(text)));
++			}
++		}
++	}
++
++	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
++	public void onCommand(PlayerCommandPreprocessEvent e) {
++		Player p = e.getPlayer();
++		if (!enabled() || !isTagged(p.getName()) || p.hasPermission("kp.combatlog.bypass")) {
++			return;
++		}
++		String line = e.getMessage().substring(1).toLowerCase(Locale.ROOT).trim();
++		int space = line.indexOf(' ');
++		String label = space < 0 ? line : line.substring(0, space);
++		String rest = space < 0 ? "" : line.substring(space);
++		int colon = label.indexOf(':'); // essentials:spawn -> spawn
++		if (colon >= 0) {
++			label = label.substring(colon + 1);
++		}
++		String command = label + rest;
++
++		List<String> blocked = config.getStringList("Combat.Logout.BlockedCommands");
++		for (String b : blocked) {
++			String entry = b.toLowerCase(Locale.ROOT).trim();
++			if (entry.startsWith("/")) {
++				entry = entry.substring(1);
++			}
++			if (!entry.isEmpty() && (command.equals(entry) || command.startsWith(entry + " "))) {
++				e.setCancelled(true);
++				String msg = config.fetchString("Combat.Logout.BlockedMessage");
++				if (msg != null && !msg.isEmpty()) {
++					p.sendMessage(Toolkit.translate(msg.replace("%seconds%", String.valueOf(secondsLeft(p.getName())))));
++				}
++				return;
++			}
++		}
++	}
++
++	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
++	public void onKick(PlayerKickEvent e) {
++		if (!config.getBoolean("Combat.Logout.PunishKicks")) {
++			kicked.add(e.getPlayer().getName());
++		}
++	}
++
++	// LOWEST: before LeaveListener and KillStreaks forget the player's hits and streak
++	@EventHandler(priority = EventPriority.LOWEST)
++	public void onQuit(PlayerQuitEvent e) {
++		Player p = e.getPlayer();
++		String name = p.getName();
++		boolean wasKicked = kicked.remove(name);
++		boolean tagged = isTagged(name);
++		taggedUntil.remove(name);
++
++		if (!enabled() || !tagged || wasKicked || serverStopping() || !Toolkit.inArena(p)
++				|| p.hasPermission("kp.combatlog.bypass") || p.isDead() || p.getHealth() <= 0) {
++			return;
++		}
++
++		Player killer = Toolkit.getPlayer(p.getWorld(), arena.getRecentAttacker(name));
++		if (killer != null) {
++			setKiller(p, killer); // so kill streaks count it too
++		}
++		loggingOut.add(name);
++		try {
++			p.setHealth(0); // a normal death: drops, kill credit, stats, streaks, Death.Commands
++		} finally {
++			loggingOut.remove(name);
++		}
++
++		List<String> commands = config.getStringList("Combat.Logout.Commands");
++		if (!commands.isEmpty()) {
++			Toolkit.runCommands(p, commands, "%player%", name);
++		}
++		plugin.getLogger().info(name + " logged out in combat" + (killer != null ? " (kill to " + killer.getName() + ")" : ""));
++	}
++
++	@EventHandler(priority = EventPriority.MONITOR)
++	public void onDeath(PlayerDeathEvent e) {
++		taggedUntil.remove(e.getEntity().getName());
++	}
++
++	private void send(Player p, String path) {
++		if (config.contains(path)) {
++			String msg = config.fetchString(path).replace("%seconds%", String.valueOf(seconds()));
++			if (!msg.isEmpty()) {
++				p.sendMessage(Toolkit.translate(msg));
++			}
++		}
++	}
++
++	/** Paper's Bukkit.isStopping() (not in the Spigot API this builds against): players leaving in a shutdown aren't logging out. */
++	private static boolean serverStopping() {
++		try {
++			return (Boolean) Bukkit.class.getMethod("isStopping").invoke(null);
++		} catch (ReflectiveOperationException | ClassCastException ex) {
++			return false;
++		}
++	}
++
++	private static Method setKiller;
++	private static boolean setKillerLooked;
++
++	/** Paper's LivingEntity#setKiller (not in the Spigot API this builds against). */
++	private static void setKiller(Player victim, Player killer) {
++		if (!setKillerLooked) {
++			setKillerLooked = true;
++			try {
++				setKiller = victim.getClass().getMethod("setKiller", Player.class);
++			} catch (NoSuchMethodException ignored) {
++			}
++		}
++		if (setKiller != null) {
++			try {
++				setKiller.invoke(victim, killer);
++			} catch (ReflectiveOperationException ignored) {
++			}
++		}
++	}
++}
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/Kits.java b/src/main/java/com/planetgallium/kitpvp/game/Kits.java
+index 9cfa407..dde995f 100644
+--- a/src/main/java/com/planetgallium/kitpvp/game/Kits.java
++++ b/src/main/java/com/planetgallium/kitpvp/game/Kits.java
+@@ -231,7 +231,7 @@ public class Kits {
+             return;
+         }
+ 
+-        if (resources.getConfig().getBoolean("Arena.ClearInventoryOnKit")) {
++        if (resources.getConfig().getBoolean("Arena.ClearInventoryOnKit") && !Toolkit.keepsInventory(p)) {
+             p.getInventory().clear();
+             p.getInventory().setArmorContents(null);
+         }
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java b/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
+index cf6db4f..372a45f 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
+@@ -160,7 +160,7 @@ public class DeathListener implements Listener {
+ 	}
+ 
+ 	private void doClearInventoryOnRespawnIfEnabled(Player victim) {
+-		if (config.getBoolean("Arena.ClearInventoryOnRespawn")) {
++		if (config.getBoolean("Arena.ClearInventoryOnRespawn") && !Toolkit.keepsInventory(victim)) {
+ 			victim.getInventory().clear();
+ 			victim.getInventory().setArmorContents(null);
+ 			victim.setItemOnCursor(null);
+@@ -169,6 +169,19 @@ public class DeathListener implements Listener {
+ 	}
+ 
+ 	private void setDeathMessage(Player victim) {
++		if (arena.getCombatLog().isLoggingOut(victim.getName())) {
++			Player killer = victim.getKiller() != null ? victim.getKiller()
++					: Toolkit.getPlayer(victim.getWorld(), arena.getRecentAttacker(victim.getName()));
++			String message = config.fetchString(killer != null ? "Death.Messages.CombatLog" : "Death.Messages.CombatLogAlone")
++					.replace("%victim%", victim.getName());
++			if (killer != null) {
++				message = message.replace("%killer%", killer.getName());
++				creditWithKill(victim, killer);
++			}
++			broadcast(victim.getWorld(), message);
++			return;
++		}
++
+ 		if (victim.getLastDamageCause() == null) {
+ 			broadcast(victim.getWorld(), getDeathMessage(victim, null, "Unknown"));
+ 			return;
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/HitListener.java b/src/main/java/com/planetgallium/kitpvp/listener/HitListener.java
+index 1f04b9d..1536274 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/HitListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/HitListener.java
+@@ -43,6 +43,7 @@ public class HitListener implements Listener {
+ 		}
+ 
+ 		arena.recordHit(damagedPlayer.getName(), damager.getName());
++		arena.getCombatLog().tag(damagedPlayer, damager);
+ 
+ 		// The sound is for melee hits, as before; a projectile has its own
+ 		if (e.getDamager() instanceof Player && config.getBoolean("Combat.HitSound.Enabled")) {
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/JoinListener.java b/src/main/java/com/planetgallium/kitpvp/listener/JoinListener.java
+index 6786b08..1154667 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/JoinListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/JoinListener.java
+@@ -59,13 +59,15 @@ public class JoinListener implements Listener {
+ 			return;
+ 		}
+ 
+-		if (config.getBoolean("Arena.ClearInventoryOnJoin")) {
++		boolean keep = Toolkit.keepsInventory(p);
++		if (config.getBoolean("Arena.ClearInventoryOnJoin") && !keep) {
+ 			p.getInventory().clear();
+ 			p.getInventory().setArmorContents(null);
+ 		}
+ 
++		// Arena items would be mixed into a kept inventory, so those players don't get them
+ 		arena.addPlayer(p, config.getBoolean("Arena.ToSpawnOnJoin"),
+-				config.getBoolean("Arena.GiveItemsOnJoin"));
++				config.getBoolean("Arena.GiveItemsOnJoin") && !keep);
+ 	}
+ 
+ }
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java b/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
+index e63043f..5f45649 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
+@@ -36,7 +36,7 @@ public class LeaveListener implements Listener {
+ 		if (Toolkit.inArena(e.getFrom())) { // if they left from a kitpvp arena
+ 			Player p = e.getPlayer();
+ 
+-			if (plugin.getResources().getConfig().getBoolean("Arena.ClearInventoryOnLeave")) {
++			if (plugin.getResources().getConfig().getBoolean("Arena.ClearInventoryOnLeave") && !Toolkit.keepsInventory(p)) {
+ 				p.getInventory().clear();
+ 				p.getInventory().setArmorContents(null);
+ 			}
+diff --git a/src/main/java/com/planetgallium/kitpvp/util/Toolkit.java b/src/main/java/com/planetgallium/kitpvp/util/Toolkit.java
+index 434e390..2c90f54 100644
+--- a/src/main/java/com/planetgallium/kitpvp/util/Toolkit.java
++++ b/src/main/java/com/planetgallium/kitpvp/util/Toolkit.java
+@@ -42,6 +42,14 @@ public class Toolkit {
+ 		return false;
+ 	}
+ 	
++	/**
++	 * Staff who inspect the arena keep their inventory: KitPvP never clears it on entering, leaving,
++	 * respawning, picking a kit or /kp spawn. kp.arena.bypass includes this.
++	 */
++	public static boolean keepsInventory(Player p) {
++		return p.hasPermission("kp.inventory.keep") || p.hasPermission("kp.arena.bypass");
++	}
++
+ 	public static boolean inArena(Entity entity) {
+ 		return inArena(entity.getWorld());
+ 	}
+diff --git a/src/main/resources/config.yml b/src/main/resources/config.yml
+index 4fe8b0d..da219b8 100644
+--- a/src/main/resources/config.yml
++++ b/src/main/resources/config.yml
+@@ -24,6 +24,36 @@ Chat:
+   Enabled: true
+ Combat:
+   KillCreditSeconds: 15
++  # Combat logging, handled here so the arena needs no separate combat-log plugin. A hit between two
++  # players puts both in combat for Seconds. Leaving the server while in combat kills you on the spot:
++  # your items drop like any death and the last player who hit you gets the kill. Kicks don't count
++  # unless PunishKicks is true; a server restart never counts. kp.combatlog.bypass skips all of it.
++  Logout:
++    Enabled: true
++    Seconds: 15
++    PunishKicks: false
++    # Refused while in combat (also matches plugin:command forms like essentials:spawn).
++    BlockedCommands:
++    - spawn
++    - home
++    - homes
++    - back
++    - warp
++    - tpa
++    - tpahere
++    - tpaccept
++    - tpyes
++    - hub
++    - lobby
++    - kp spawn
++    - kitpvp spawn
++    BlockedMessage: '%prefix% &cYou can''t do that in combat. &7(%seconds%s left)'
++    TagMessage: '%prefix% &cYou''re in combat! &7Logging out in the next %seconds%s counts as a death.'
++    UntagMessage: '%prefix% &aYou''re no longer in combat.'
++    ActionBar: true
++    ActionBarText: '&cIn combat &8- &f%seconds%s'
++    # Run as console for whoever logged out (%player%), e.g. a warning.
++    Commands: []
+   HitSound:
+     Sound: BLAZE_HIT
+     Pitch: 1
+@@ -63,6 +93,8 @@ Death:
+     Explosion: '%prefix% &b%victim% &7blew up.'
+     Suicide: '%prefix% &b%victim% &7killed themselves.'
+     Unknown: '%prefix% &b%victim% &7died.'
++    CombatLog: '%prefix% &b%victim% &7logged out in combat and was killed by &b%killer%&7.'
++    CombatLogAlone: '%prefix% &b%victim% &7logged out in combat and died.'
+     Enabled: true
+ Respawn:
+   Commands: []
+diff --git a/src/main/resources/plugin.yml b/src/main/resources/plugin.yml
+index aa57095..05f3d23 100644
+--- a/src/main/resources/plugin.yml
++++ b/src/main/resources/plugin.yml
+@@ -40,3 +40,11 @@ permissions:
+    kp.arena.bypass:
+      description: Keep inventory, effects and game mode on entering the arena
+      default: op
++     children:
++       kp.inventory.keep: true
++   kp.inventory.keep:
++     description: KitPvP never clears your inventory (entering, leaving, respawning, picking a kit, /kp spawn). For staff who come in to watch fights.
++     default: op
++   kp.combatlog.bypass:
++     description: Never put in combat, so logging out or /spawn mid-fight carries no penalty
++     default: false
+-- 
+2.43.0
+

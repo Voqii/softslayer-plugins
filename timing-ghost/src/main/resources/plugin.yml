@@ -1,0 +1,19 @@
+name: TimingGhost
+version: '${project.version}'
+main: com.voqii.timingghost.TimingGhost
+api-version: '26.3'
+depend: [TimingSystem]
+description: Races you against a ghost of your best TimingSystem time trial.
+author: voqii
+commands:
+  ttghost:
+    description: Choose which ghost you race against.
+    aliases: [tghost]
+    usage: /ttghost [off|pb|best]
+permissions:
+  timingghost.use:
+    description: See ghosts and use /ttghost off|pb|best.
+    default: true
+  timingghost.admin:
+    description: /ttghost clear and /ttghost reload.
+    default: op

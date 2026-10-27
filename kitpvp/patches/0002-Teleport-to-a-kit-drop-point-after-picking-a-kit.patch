@@ -1,7 +1,7 @@
 From bf0bc00cf845ef1fb2f776c4885e5f4ac2802eba Mon Sep 17 00:00:00 2001
 From: Voqii <codylepine4@gmail.com>
 Date: Tue, 20 Oct 2026 00:00:40 +0000
-Subject: [PATCH 2/2] Teleport to a kit drop point after picking a kit
+Subject: [PATCH 2/3] Teleport to a kit drop point after picking a kit
 
 /kp adddrop saves a drop point for the current world, /kp deldrops removes
 them. With Arena.TeleportOnKit (default true) a player who picks a kit is sent

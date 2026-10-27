@@ -1,0 +1,51 @@
+name: LoreSmith
+version: '${project.version}'
+main: com.voqii.loresmith.LoreSmith
+api-version: '26.3'
+author: Voqii
+description: Name, colour and lore your items from a menu. No client mod needed.
+commands:
+  lore:
+    description: Open the item editor for the item in your hand.
+    usage: /<command> [reload]
+    aliases: [loresmith, itemeditor]
+permissions:
+  loresmith.use:
+    description: Open /lore.
+    default: true
+  loresmith.name:
+    description: Rename items.
+    default: true
+  loresmith.lore:
+    description: Add and edit your own lore lines.
+    default: true
+  loresmith.glint:
+    description: Turn the enchantment shine on or off.
+    default: true
+  loresmith.color.codes:
+    description: '"Codes" mode: & colour codes typed by hand.'
+    default: true
+  loresmith.color.solid:
+    description: One colour from the colour picker.
+    default: true
+  loresmith.color.hex:
+    description: Any RGB colour (&#rrggbb, the sliders, hex codes). Without it only the 16 standard colours work.
+    default: true
+  loresmith.color.gradient:
+    description: Gradient mode.
+    default: true
+  loresmith.color.rainbow:
+    description: Rainbow mode.
+    default: true
+  loresmith.color.alternating:
+    description: Alternating-colours mode.
+    default: true
+  loresmith.format:
+    description: Bold, italic, underline, strikethrough.
+    default: true
+  loresmith.format.obfuscated:
+    description: Obfuscated (scrambling) text.
+    default: op
+  loresmith.admin:
+    description: Edit locked lines and blocked items, ignore line limits, /lore reload.
+    default: op

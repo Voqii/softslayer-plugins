@@ -1,0 +1,21 @@
+# TimingGhost: a see-through replay of a time trial run that only the racer can see.
+# Ghosts are only recorded from the moment this plugin is installed; older records have no path to replay.
+
+# Ghost used when a player hasn't picked one with /ttghost: pb (their own best), best (fastest ghost on the track), off
+default-mode: pb
+
+# Block the ghost boat / figure is built from. A stained glass block gives the see-through look.
+material: LIGHT_BLUE_STAINED_GLASS
+
+# Coloured outline around the ghost, visible through walls. Set to false to turn it off.
+glow: true
+glow-color: '#8FE3FF'
+
+# Floating name tag above the ghost.
+show-label: true
+
+# Turns the driver's head (degrees). If the ghost's face points backwards, set this to 180 and /ttghost reload.
+head-yaw: 0
+
+# Runs longer than this aren't recorded (keeps memory in check if someone idles mid-run).
+max-run-seconds: 900
