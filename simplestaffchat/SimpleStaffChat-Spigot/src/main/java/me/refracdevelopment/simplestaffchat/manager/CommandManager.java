@@ -49,6 +49,28 @@ public class CommandManager {
         this.commands.add(new ReloadCommand(this.plugin));
     }
 
+    /**
+     * Fork addition: claims every name and alias of our commands in the server's command map, overriding
+     * whoever holds them. Run once all plugins are enabled. Needed because plugins built on ACF (TimingSystem
+     * registers /s as a shortcut for /settings) force-register their names and delete every entry that
+     * pointed at the old command, even simplestaffchat:s, so /s for staff chat vanished entirely.
+     */
+    public void claimAll() {
+        java.util.Map<String, org.bukkit.command.Command> known = org.bukkit.Bukkit.getCommandMap().getKnownCommands();
+        for (Command command : commands) {
+            for (String name : command.getNameList()) {
+                String label = name.toLowerCase(java.util.Locale.ROOT);
+                org.bukkit.command.Command previous = known.put(label, command);
+                known.put("simplestaffchat:" + label, command);
+                if (previous != null && previous != command) {
+                    plugin.getLogger().info("/" + label + " now opens " + command.getName() + " (it was taken by "
+                            + previous.getClass().getName() + ").");
+                }
+            }
+        }
+        org.bukkit.Bukkit.getOnlinePlayers().forEach(org.bukkit.entity.Player::updateCommands);
+    }
+
     public void register(Command... command) {
         commands.addAll(List.of(command));
     }

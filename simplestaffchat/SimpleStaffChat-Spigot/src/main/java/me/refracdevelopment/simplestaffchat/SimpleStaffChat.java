@@ -53,6 +53,8 @@ public final class SimpleStaffChat extends JavaPlugin {
     private void loadModules() {
         this.commandManager = new CommandManager(this);
         getCommandManager().registerAll();
+        // After every plugin has enabled, take our command names back (see CommandManager#claimAll).
+        getServer().getGlobalRegionScheduler().run(this, task -> getCommandManager().claimAll());
 
         if (getSettings().JOIN_ENABLED)
             getServer().getPluginManager().registerEvents(new JoinListener(this), this);

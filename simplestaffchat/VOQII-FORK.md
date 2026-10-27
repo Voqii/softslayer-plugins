@@ -1,4 +1,4 @@
-# SimpleStaffChat 4.4.0-voqii (SoftSlayer fork)
+# SimpleStaffChat 4.4.1-voqii (SoftSlayer fork)
 
 Fork of RefracDevelopment/SimpleStaffChat 4.3.5 (upstream archived, last release 2024) for Paper/Purpur 26.3.
 Only the Spigot module is built.
@@ -12,7 +12,14 @@ default configs are SoftSlayer's (`/adult`, `/adultchat`, `[18+]` format).
     docker run --rm -u 1000:1000 -v ~/.m2-ssc:/m2 -v "$PWD":/src -w /src maven:3.9-eclipse-temurin-21 \
       mvn -q -B -Dmaven.repo.local=/m2/repository -pl SimpleStaffChat-Spigot -am clean package
 
-Jar: `SimpleStaffChat-Spigot/target/SimpleStaffChat-Spigot-4.4.0-voqii.jar`
+Jar: `SimpleStaffChat-Spigot/target/SimpleStaffChat-Spigot-4.4.1-voqii.jar`
+
+## 4.4.1-voqii: getting /s back
+
+TimingSystem (built on ACF) registers `/s` as a shortcut for `/settings`. ACF force-registers its names and deletes
+every command-map entry that pointed at the old command, even `simplestaffchat:s`, so staff chat's `/s` vanished and a
+`commands.yml` alias had nothing to point at. One tick after the server finishes enabling plugins, SimpleStaffChat now
+claims every name and alias of its commands back and logs which plugin had them.
 
 ## Changes vs 4.3.4/4.3.5
 
