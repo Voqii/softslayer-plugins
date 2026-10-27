@@ -48,8 +48,8 @@ const last = (bot, re) => bot.messages.find(m => re.test(m));
   check('an unknown call name lists the real ones', !!(await alice.waitFor(/no call named nosuchcall.*friends/).catch(() => null)));
 
   alice.chat('/dvc call');
-  check('a player with the mod starts connecting', !!(await alice.waitFor(/Connecting to Discord/).catch(() => null)));
-  check('a bad token fails cleanly and tells the player', !!(await alice.waitFor(/Couldn't connect to Discord/, 30000).catch(() => null)));
+  check('a player with the mod is asked to wait for Discord', !!(await alice.waitFor(/Asking the people in the Discord call/).catch(() => null)));
+  check('a bad token fails cleanly and tells the player', !!(await alice.waitFor(/Couldn't reach Discord/, 30000).catch(() => null)));
 
   alice.chat('/dvc hangup');
   check('after a failed connect the player is no longer in the call', !!(await alice.waitFor(/not in a Discord call/).catch(() => null)));

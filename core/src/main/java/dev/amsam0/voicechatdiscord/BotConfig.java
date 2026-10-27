@@ -11,10 +11,11 @@ import java.util.function.Consumer;
 /**
  * One entry under {@code bots:} in the config.
  *
- * @param mode {@link Mode#PLAYER} (upstream behaviour, {@code /dvc start}) or {@link Mode#CALL} ({@code /dvc call})
- * @param name only used by call bots, to pick one with {@code /dvc call <name>}
+ * @param mode     {@link Mode#PLAYER} (upstream behaviour, {@code /dvc start}) or {@link Mode#CALL} ({@code /dvc call})
+ * @param name     only used by call bots, to pick one with {@code /dvc call <name>}
+ * @param approval call bots only: someone in the voice channel has to let each player in (default true)
  */
-public record BotConfig(String token, long vcId, Mode mode, String name) {
+public record BotConfig(String token, long vcId, Mode mode, String name, boolean approval) {
     public enum Mode {PLAYER, CALL}
 
     /**
@@ -55,7 +56,15 @@ public record BotConfig(String token, long vcId, Mode mode, String name) {
             }
 
             String name = null;
+            boolean approval = true;
             if (mode == Mode.CALL) {
+                Object approvalValue = bot.get("approval");
+                if (approvalValue != null && !(approvalValue instanceof Boolean)) {
+                    error.accept("Failed to load the call bot for vc_id " + vcId + ": approval must be true or false, not `" + approvalValue + "`.");
+                    continue;
+                }
+                if (approvalValue != null) approval = (Boolean) approvalValue;
+
                 name = bot.get("name") != null
                         ? bot.get("name").toString().toLowerCase(Locale.ROOT).trim()
                         : "call" + (callNames.isEmpty() ? "" : callNames.size() + 1);
@@ -69,7 +78,7 @@ public record BotConfig(String token, long vcId, Mode mode, String name) {
                 }
             }
 
-            bots.add(new BotConfig(token, vcId.longValue(), mode, name));
+            bots.add(new BotConfig(token, vcId.longValue(), mode, name, approval));
         }
         return bots;
     }

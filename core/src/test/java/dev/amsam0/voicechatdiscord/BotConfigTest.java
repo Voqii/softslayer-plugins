@@ -25,7 +25,7 @@ class BotConfigTest {
     @Test
     void botsWithoutAModeWorkLikeUpstream() {
         List<BotConfig> bots = parse(bot("token", "abc", "vc_id", 1234567890123456789L));
-        assertEquals(List.of(new BotConfig("abc", 1234567890123456789L, BotConfig.Mode.PLAYER, null)), bots);
+        assertEquals(List.of(new BotConfig("abc", 1234567890123456789L, BotConfig.Mode.PLAYER, null, true)), bots);
         assertTrue(errors.isEmpty());
     }
 
@@ -91,5 +91,19 @@ class BotConfigTest {
     @Test
     void missingBotsListIsEmpty() {
         assertTrue(BotConfig.parse(null, errors::add).isEmpty());
+    }
+
+    @Test
+    void callBotsAskForApprovalUnlessTurnedOff() {
+        assertTrue(parse(bot("token", "a", "vc_id", 1L, "mode", "call")).get(0).approval(), "on by default");
+        assertFalse(parse(bot("token", "a", "vc_id", 1L, "mode", "call", "approval", false)).get(0).approval());
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void approvalMustBeTrueOrFalse() {
+        assertTrue(parse(bot("token", "a", "vc_id", 1L, "mode", "call", "approval", "no")).isEmpty(),
+                "a typo must not quietly let everyone in");
+        assertTrue(errors.get(0).contains("approval must be true or false"));
     }
 }

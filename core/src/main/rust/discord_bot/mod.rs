@@ -1,6 +1,6 @@
 use std::{
     ops::Deref,
-    sync::Arc,
+    sync::{atomic::AtomicBool, Arc},
     thread,
     time::{Duration, Instant},
 };
@@ -9,7 +9,7 @@ use dashmap::DashMap;
 use eyre::{eyre, Context as _, Report};
 use opus2::Decoder;
 use parking_lot::{Mutex, RwLock};
-use serenity::all::{ChannelId, GuildId, Http};
+use serenity::all::{ChannelId, GuildId, Http, UserId};
 use songbird::{
     driver::{Channels, DecodeConfig, DecodeMode, SampleRate},
     Config, Songbird,
@@ -26,6 +26,9 @@ mod jni;
 mod log_in;
 mod start;
 mod svc_receive;
+mod text;
+
+pub use text::Click;
 
 type SenderId = i32;
 
@@ -44,6 +47,13 @@ struct DiscordBot {
     received_audio_tx: flume::Sender<Vec<u8>>,
     received_audio_rx: flume::Receiver<Vec<u8>>,
     client_task: Mutex<Option<AbortHandle>>,
+    /// Who is in our voice channel right now (user -> is a bot), kept up to date from the gateway.
+    voice_members: Arc<DashMap<UserId, bool>>,
+    /// Set once the gateway has sent our guild, so `voice_members` is complete.
+    guild_seen: Arc<AtomicBool>,
+    clicks_tx: flume::Sender<Click>,
+    clicks_rx: flume::Receiver<Click>,
+    guild_id: Mutex<Option<GuildId>>,
 }
 
 enum State {
@@ -62,6 +72,7 @@ enum State {
 impl DiscordBot {
     pub fn new(token: String, vc_id: ChannelId) -> DiscordBot {
         let (received_audio_tx, received_audio_rx) = flume::bounded(MAX_AUDIO_BUFFER);
+        let (clicks_tx, clicks_rx) = flume::bounded(64);
         DiscordBot {
             token,
             vc_id,
@@ -77,6 +88,11 @@ impl DiscordBot {
             received_audio_tx,
             received_audio_rx,
             client_task: Mutex::new(None),
+            voice_members: Arc::new(DashMap::new()),
+            guild_seen: Arc::new(AtomicBool::new(false)),
+            clicks_tx,
+            clicks_rx,
+            guild_id: Mutex::new(None),
         }
     }
 
