@@ -10,6 +10,8 @@ const { joinVoiceChannel, entersState, VoiceConnectionStatus, createAudioPlayer,
 const { Readable } = require('stream');
 const OpusScript = require('opusscript');
 const { connect, powerAt, concat, SAMPLE_RATE, FRAME } = require('./svc-client');
+const fs = require('fs');
+const CONFIG = '/data/plugins/voicechat-discord/config.yml'; // run-discord.sh mounts the server's data dir
 
 const HOST = process.env.MC_HOST || 'vcd-e2e-mc';
 const { VC_ID, BRIDGE_TOKEN, SPEAKER1_TOKEN, SPEAKER2_TOKEN } = process.env;
@@ -100,11 +102,39 @@ function record(bot, userId) {
   }
 
   const alice = await connect({ host: HOST, port: 25565, username: 'SvcAlice', log: (m) => process.env.DEBUG && console.log('[alice]', m) });
+  const bridgeMessages = async () => (await s1.channel.messages.fetch({ limit: 20 })).filter(msg => msg.author.id === BRIDGE_ID);
+  const before = (await bridgeMessages()).size;
+
+  // Approval is on (run-discord.sh's config). Only bots are in the channel, and bots can't let anyone in.
+  alice.chat('/dvc call');
+  check('with approval on, /dvc call asks first', !!(await alice.waitFor(/Asking the people in the Discord call/).catch(() => null)));
+  check("test bots in the channel don't count as people who can answer",
+    !!(await alice.waitFor(/Nobody is in the Discord call right now/, 30000).catch(() => null)), alice.messages.at(-1));
+  check('so nothing is posted in the channel', (await bridgeMessages()).size === before);
+  check('and the bridge bot stays out of voice', !s1.channel.guild.voiceStates.cache.get(BRIDGE_ID)?.channelId);
+
+  // Buttons need a person to click them, so the rest runs with approval off.
+  fs.writeFileSync(CONFIG, fs.readFileSync(CONFIG, 'utf8').replace('approval: true', 'approval: false'));
+  alice.chat('/dvc reloadconfig');
+  await alice.waitFor(/[Rr]eloaded|[Ss]uccessfully/, 30000).catch(() => null);
+  await sleep(2000);
   alice.chat('/dvc call');
   check('the bridge connects to Discord', !!(await alice.waitFor(/Connected! You're in the Discord voice call/, 30000).catch(() => null)), alice.messages.at(-1));
   await sleep(SETTLE_MS);
   const bridgeState = s1.channel.guild.voiceStates.cache.get(BRIDGE_ID);
   check('the bridge bot is in the voice channel', bridgeState?.channelId === VC_ID);
+  const joinNotices = await bridgeMessages();
+  check("the channel's chat gets a notice that a Minecraft player joined", joinNotices.size === before + 1,
+    `${joinNotices.size - before} new messages (needs Send Messages + Read Message History for the bridge bot)`);
+  const notice = joinNotices.first();
+  // Other bots' message text and buttons need the Message Content intent, but a bot can always read its own.
+  const own = await (await fetch(`https://discord.com/api/v10/channels/${VC_ID}/messages/${notice?.id}`,
+    { headers: { Authorization: `Bot ${BRIDGE_TOKEN}` } })).json();
+  check('the notice says who is listening', /\*\*SvcAlice\*\* is in the call from Minecraft\./.test(own.content || ''), own.content);
+  check('the notice has a Remove button', !!own.components?.[0]?.components?.some(c => c.label === 'Remove'));
+  const bridgeMember = await s1.channel.guild.members.fetch({ user: BRIDGE_ID, force: true });
+  check("the bridge bot's nickname shows who's listening", bridgeMember.nickname === 'MC: SvcAlice',
+    `nickname ${JSON.stringify(bridgeMember.nickname)} (needs Change Nickname)`);
 
   // Each speaker alone first, as a reference: Discord's codec doesn't treat every frequency the same, so the
   // mix is compared with how each speaker came through on their own, not with the other speaker.
@@ -154,6 +184,10 @@ function record(bot, userId) {
   await alice.waitFor(/You left the Discord call/).catch(() => null);
   await sleep(5000);
   check('the bridge bot leaves when the call ends', !s1.channel.guild.voiceStates.cache.get(BRIDGE_ID)?.channelId);
+  const after = await s1.channel.messages.fetch({ message: notice?.id, force: true }).catch(() => null);
+  check('the notice is updated when the player leaves', !!after?.editedTimestamp);
+  const nickAfter = (await s1.channel.guild.members.fetch({ user: BRIDGE_ID, force: true })).nickname;
+  check("the bridge bot's own name is back", nickAfter === null, JSON.stringify(nickAfter));
 
   alice.quit();
   for (const s of [s1, s2]) {

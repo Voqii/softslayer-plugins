@@ -83,6 +83,8 @@ public final class CallSession {
     private boolean discordTalking = false;
     private Thread audioThread = null;
     private long lastReset = 0;
+    private Runnable onParticipantsChanged = () -> {
+    };
 
     public CallSession(String name, long vcId, DiscordVoice voice, Supplier<VoicechatServerApi> api, Platform platform,
                        Executor worker, ThreadFactory pumpThreads) {
@@ -97,6 +99,14 @@ public final class CallSession {
 
     public String name() {
         return name;
+    }
+
+    /**
+     * Runs whenever someone joins or leaves, while the call's lock is held: it must only hand the work off to
+     * another thread.
+     */
+    public synchronized void setOnParticipantsChanged(Runnable onParticipantsChanged) {
+        this.onParticipantsChanged = onParticipantsChanged;
     }
 
     public long vcId() {
@@ -124,6 +134,16 @@ public final class CallSession {
         return UUID.nameUUIDFromBytes(("voicechat-discord-call:" + vcId + ":" + player).getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Whether the player has Simple Voice Chat installed and connected, i.e. could join right now.
+     */
+    public boolean hasVoiceChat(ServerPlayer player) {
+        VoicechatServerApi api = this.api.get();
+        if (api == null) return false;
+        VoicechatConnection connection = api.getConnectionOf(player.getUuid());
+        return connection != null && connection.isInstalled();
+    }
+
     public synchronized JoinResult join(ServerPlayer player) {
         UUID uuid = player.getUuid();
         if (participants.containsKey(uuid)) return JoinResult.ALREADY_IN_CALL;
@@ -144,6 +164,7 @@ public final class CallSession {
         bypassGroupIsolation(channel);
         participants.put(uuid, new Participant(player, channel));
         platform.info(platform.getName(player) + " joined call '" + name + "'");
+        onParticipantsChanged.run();
 
         return switch (state) {
             case CONNECTED -> JoinResult.JOINED;
@@ -184,6 +205,7 @@ public final class CallSession {
         if (removed == null) return false;
         removed.channel().flush();
         platform.info(platform.getName(removed.player()) + " left call '" + name + "'");
+        onParticipantsChanged.run();
         if (participants.isEmpty() && state == State.CONNECTED) {
             disconnectLocked();
         }
@@ -199,7 +221,9 @@ public final class CallSession {
             p.channel().flush();
             if (reason.length > 0) platform.sendMessage(p.player(), reason);
         }
+        boolean anyone = !participants.isEmpty();
         participants.clear();
+        if (anyone) onParticipantsChanged.run();
         if (state != State.IDLE) disconnectLocked();
     }
 
@@ -227,6 +251,7 @@ public final class CallSession {
                             Component.red("Couldn't connect to Discord. Ask a server admin to check the console."));
                 }
                 participants.clear();
+                onParticipantsChanged.run();
                 state = State.IDLE;
             }
             return;

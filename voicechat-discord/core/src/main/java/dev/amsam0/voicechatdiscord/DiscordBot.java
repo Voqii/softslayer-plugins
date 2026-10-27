@@ -10,12 +10,13 @@ import de.maxhenkel.voicechat.api.packets.SoundPacket;
 import de.maxhenkel.voicechat.api.packets.StaticSoundPacket;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 
 import static dev.amsam0.voicechatdiscord.Core.api;
 import static dev.amsam0.voicechatdiscord.Core.platform;
 
-public final class DiscordBot implements DiscordVoice {
+public final class DiscordBot implements DiscordVoice, DiscordText {
     // Make sure to mirror this value on the Rust side (`DiscordBot::reset_senders::DURATION_UNTIL_RESET`)
     private static final int MILLISECONDS_UNTIL_RESET = 1000;
     /**
@@ -412,6 +413,86 @@ public final class DiscordBot implements DiscordVoice {
     @Override
     public void resetIdleSenders() {
         _resetSenders(ptr);
+    }
+
+    // DiscordText, used by call requests (CallRequests).
+
+    @Override
+    public void ensureLoggedIn() throws Exception {
+        try {
+            _logIn(ptr);
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
+    }
+
+    private native int _humansInVoiceChannel(long ptr);
+
+    @Override
+    public int humansInVoiceChannel() {
+        return _humansInVoiceChannel(ptr);
+    }
+
+    private native long _postMessage(long ptr, String content, String buttons) throws Throwable;
+
+    @Override
+    public long postMessage(String content, List<Button> buttons) throws Exception {
+        try {
+            return _postMessage(ptr, content, encode(buttons));
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
+    }
+
+    private native void _editMessage(long ptr, long messageId, String content, String buttons) throws Throwable;
+
+    @Override
+    public void editMessage(long messageId, String content, List<Button> buttons) throws Exception {
+        try {
+            _editMessage(ptr, messageId, content, encode(buttons));
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
+    }
+
+    private native void _setNickname(long ptr, @Nullable String nickname) throws Throwable;
+
+    @Override
+    public void setNickname(@Nullable String nickname) throws Exception {
+        try {
+            _setNickname(ptr, nickname);
+        } catch (Exception e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
+    }
+
+    private native @Nullable String _nextClick(long ptr, long timeoutMs);
+
+    @Override
+    public @Nullable Click nextClick(long timeoutMs) {
+        String click = _nextClick(ptr, timeoutMs);
+        if (click == null) return null;
+        String[] parts = click.split("\n", 3);
+        return new Click(parts[0], Long.parseLong(parts[1]), parts[2]);
+    }
+
+    /**
+     * One line per button, "id\tlabel\tstyle". Our ids and labels never contain tabs or newlines.
+     */
+    private static String encode(List<Button> buttons) {
+        StringBuilder out = new StringBuilder();
+        for (Button b : buttons) {
+            out.append(b.id()).append('\t').append(b.label()).append('\t').append(b.style().discordValue).append('\n');
+        }
+        return out.toString();
     }
 
     private static double distance(Position pos1, Position pos2) {

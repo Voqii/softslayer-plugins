@@ -1,7 +1,7 @@
 # SoftSlayer fork of Simple Voice Chat Discord Bridge
 
 Fork of [amsam0/voicechat-discord](https://gitlab.com/amsam0/voicechat-discord) 3.2.1 (MIT), branch `call-mode`.
-Version `3.2.1-call.1`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
+Version `3.2.1-call.2`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
 
 ## Why
 
@@ -31,6 +31,23 @@ voice channel. Upstream can't do that well:
    - The bot is only in the voice channel while someone is in the call, so its presence means someone in game
      can hear the channel.
    - Permission `voicechat-discord.call` (default op) for `/dvc call` and `/dvc calls`.
+4. **Join requests: the Discord channel decides who listens** (`CallRequests.java`, Rust `discord_bot/text.rs` +
+   the `Handler` in `log_in.rs`). A Discord voice channel is invite-only; the permission node alone would let
+   whoever hands out ranks in game decide who hears it. So with `approval` on (the default):
+   - `/dvc call` posts "Steve wants to join this voice channel from Minecraft" with **Let in** / **Deny** buttons in
+     the voice channel's own text chat. Only someone in that voice channel can answer: the bot tracks the
+     channel's members from gateway voice-state events (bots don't count), and anyone else who clicks gets a
+     private "Only people in this voice channel can answer." No answer in 60 s is a no.
+   - If nobody (no human) is in the channel, nothing is posted: the player is told there's nobody to ask.
+     A player without the Simple Voice Chat mod is refused before anything is posted.
+   - Denied / no answer: 30 s before that player can ask again. Removed: 5 minutes.
+   - `/dvc hangup` cancels an open request; leaving the server cancels it too.
+   - Discord names never reach the game (the player is told "the Discord call said no", not who).
+   With approval on or off, the channel always sees who's listening: each Minecraft player in the call has a
+   message ("Steve is in the call from Minecraft, let in by Alice") with a **Remove** button, edited when they
+   leave or are removed, and the bot's nickname lists them ("MC: Steve, Alex", shortened to fit 32 characters,
+   back to the bot's own name when nobody's listening). Clicks on stale buttons (e.g. from before a restart) turn
+   the message into "This request isn't open anymore." `approval: false` on a call bot skips the asking only.
 3. Small fixes: `getBotForPlayer` compared UUIDs with `==`; small `vc_id`s that YAML reads as Integer failed the
    `(Long)` cast (`BotConfig`).
 
@@ -46,7 +63,16 @@ bots:
   vc_id: 9876543210987654321
 ```
 
-The Discord bot needs Connect and Speak in the channel (the upstream invite link's permissions cover it).
+The Discord bot needs Connect and Speak in the channel (the upstream invite link's permissions cover it), and for
+join requests also View Channel, Send Messages and Read Message History in that voice channel, plus Change
+Nickname. Without Change Nickname everything else still works (one warning in the console).
+
+```yaml
+- token: CALL_BOT_TOKEN
+  vc_id: 1234567890123456789
+  mode: call
+  approval: false      # optional: let players in without asking (they're still shown in the channel)
+```
 
 ## Building
 
@@ -77,9 +103,9 @@ Run all of these after any change:
 | What | How | Covers |
 |---|---|---|
 | Rust | `cargo test --release` in `core/` (same container) | mixing: 2 and 3 people at once come through balanced after a real Opus round trip, silence sends nothing, clipping, odd frame sizes. Mutation-checked: putting upstream's "first speaker only" back fails 4 of 6. |
-| Java | `./gradlew :core:test` | `CallSessionTest` (call lifecycle against a fake Discord + mocked SVC API: joining, connect failures, hanging up mid-connect, audio routing, mute/cancel, isolation bypass, resets) and `BotConfigTest`. |
-| End to end, no Discord | `ss-build/e2e/run-all.sh <data dir> <gradle cache>` | Throwaway offline Purpur 26.3 + real SVC 2.6.21 + the jar, driven by `svc-client.js`, a headless SVC client (real handshake, AES-GCM UDP, Opus). `no-discord.test.js`: permission, no-mod refusal, names, bad token. `loopback.test.js`: a test-only plugin stands in for Discord, checking mic → call → every participant, outsiders hear nothing, isolated groups, flush, hangup, quitting, rejoining. |
-| End to end, real Discord | `VC_ID=… BRIDGE_TOKEN=… SPEAKER1_TOKEN=… SPEAKER2_TOKEN=… ss-build/e2e/run-discord.sh <data dir>` | Two test bots talk at once, and the game must hear both; the game talks and Discord must hear it; the bot leaves at hangup. Needs a test Discord server with three bot apps. |
+| Java | `./gradlew :core:test` | `CallSessionTest` (call lifecycle against a fake Discord + mocked SVC API: joining, connect failures, hanging up mid-connect, audio routing, mute/cancel, isolation bypass, resets), `CallRequestsTest` (asking, let in / deny / no answer, only the first answer counts, cooldowns, remove, stale buttons, cancelling before and after posting, nobody in the channel, no mod, nickname, approval off, Markdown/mention escaping) and `BotConfigTest`. Mutation-checked: skipping approval fails 14 tests. |
+| End to end, no Discord | `ss-build/e2e/run-all.sh <data dir> <gradle cache>` | Throwaway offline Purpur 26.3 + real SVC 2.6.21 + the jar, driven by `svc-client.js`, a headless SVC client (real handshake, AES-GCM UDP, Opus). `no-discord.test.js`: permission, no-mod refusal, names, bad token. `loopback.test.js`: a test-only plugin stands in for Discord (voice and the channel's chat; `/loopback-answer let in\|deny\|remove` clicks as someone in the channel), checking the whole request flow through real commands, mic → call → every participant, outsiders hear nothing, isolated groups, flush, hangup, Remove, quitting, rejoining. |
+| End to end, real Discord | `VC_ID=… BRIDGE_TOKEN=… SPEAKER1_TOKEN=… SPEAKER2_TOKEN=… ss-build/e2e/run-discord.sh <data dir>` | With approval on: bots in the channel don't count, so nothing is posted. Then (config switched to `approval: false` + `/dvc reloadconfig`): two test bots talk at once, and the game must hear both; the game talks and Discord must hear it; the join notice and nickname appear and are undone at hangup; the bot leaves. Needs a test Discord server with three bot apps. Bots can't click buttons, so Let in / Deny / Remove by a real person is only covered by the loopback test. |
 
 `ss-build/e2e/jars/` must hold the `voicechat-bukkit`, `ViaVersion` and `ViaBackwards` jars of the server you're
 targeting (the test client speaks 1.21.11 through ViaVersion). `npm install` in `ss-build/e2e` first.

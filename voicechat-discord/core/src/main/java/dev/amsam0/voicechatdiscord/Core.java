@@ -10,10 +10,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static dev.amsam0.voicechatdiscord.Constants.CONFIG_HEADER;
@@ -37,10 +40,15 @@ public final class Core {
     /**
      * What has to be shut down, in order, before a call bot's natives can be freed.
      */
-    private record CallResources(CallSession call, ExecutorService worker, DiscordBot bot) {
+    private record CallResources(CallSession call, CallRequests requests, ExecutorService worker,
+                                 ScheduledExecutorService discord, DiscordBot bot) {
     }
 
     private static final ArrayList<CallResources> callResources = new ArrayList<>();
+    /**
+     * Every call's join requests, including calls added with {@link #addCall}.
+     */
+    private static final Map<CallSession, CallRequests> requestsByCall = new ConcurrentHashMap<>();
     public static int debugLevel = 0;
 
     private static native void initializeNatives();
@@ -125,6 +133,7 @@ public final class Core {
         bots.clear();
         calls.clear();
         callResources.clear();
+        requestsByCall.clear();
 
         for (BotConfig bot : BotConfig.parse(config.getList("bots"), platform::error)) {
             DiscordBot discordBot = new DiscordBot(bot.token(), bot.vcId());
@@ -133,8 +142,18 @@ public final class Core {
                 ExecutorService worker = Executors.newSingleThreadExecutor(r -> daemon(r, "voicechat-discord: Call '" + name + "' connection"));
                 CallSession call = new CallSession(name, bot.vcId(), discordBot, () -> api, platform, worker,
                         r -> daemon(r, "voicechat-discord: Call '" + name + "' audio"));
+                ScheduledExecutorService discord = Executors.newSingleThreadScheduledExecutor(r -> daemon(r, "voicechat-discord: Call '" + name + "' chat"));
+                CallRequests requests = new CallRequests(call, discordBot, platform, bot.approval(), discord,
+                        (task, delayMs) -> {
+                            var future = discord.schedule(task, delayMs, TimeUnit.MILLISECONDS);
+                            return () -> future.cancel(false);
+                        },
+                        System::currentTimeMillis,
+                        r -> daemon(r, "voicechat-discord: Call '" + name + "' buttons"));
+                requests.start();
+                requestsByCall.put(call, requests);
                 calls.add(call);
-                callResources.add(new CallResources(call, worker, discordBot));
+                callResources.add(new CallResources(call, requests, worker, discord, discordBot));
             } else {
                 bots.add(discordBot);
             }
@@ -172,8 +191,18 @@ public final class Core {
                     Component.red(" in a moment."));
         }
         // hangUpAll only queues the disconnect. The natives can't be freed until the connection worker
-        // has run it and the audio thread has stopped calling into them.
+        // has run it, the chat thread has updated its messages, and the audio and button threads have stopped
+        // calling into them.
         for (CallResources r : callResources) {
+            r.requests().stop();
+            r.discord().shutdown();
+            try {
+                if (!r.discord().awaitTermination(15, TimeUnit.SECONDS)) {
+                    platform.warn("Call '" + r.call().name() + "' took too long to update its Discord messages");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             r.worker().shutdown();
             try {
                 if (!r.worker().awaitTermination(15, TimeUnit.SECONDS)) {
@@ -189,6 +218,7 @@ public final class Core {
         }
         calls.clear();
         callResources.clear();
+        requestsByCall.clear();
     }
 
     private static void onPlayerLeave(UUID playerUuid) {
@@ -197,7 +227,28 @@ public final class Core {
             platform.info("Stopping bot for player " + playerUuid);
             bot.stop();
         }
+        for (CallRequests r : requestsByCall.values()) r.cancel(playerUuid, "They left the server.");
         for (CallSession call : calls) call.leave(playerUuid);
+    }
+
+    public static @Nullable CallRequests getRequests(CallSession call) {
+        return requestsByCall.get(call);
+    }
+
+    public static @Nullable CallRequests getPendingRequestFor(UUID playerUuid) {
+        for (CallRequests r : requestsByCall.values()) {
+            if (r.isPending(playerUuid)) return r;
+        }
+        return null;
+    }
+
+    /**
+     * Adds a call that isn't in the config. Only the end-to-end tests' loopback plugin uses it; the caller owns
+     * shutting it down, and a config reload forgets it.
+     */
+    public static void addCall(CallSession call, CallRequests requests) {
+        requestsByCall.put(call, requests);
+        calls.add(call);
     }
 
     public static @Nullable CallSession getCall(@Nullable String name) {

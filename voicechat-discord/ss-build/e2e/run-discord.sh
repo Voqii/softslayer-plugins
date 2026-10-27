@@ -12,11 +12,11 @@ export E2E_DATA="$1"
 CONFIG="$E2E_DATA/discord-config.yml"
 mkdir -p "$E2E_DATA"
 umask 077
-printf 'bots:\n- token: %s\n  vc_id: %s\n  mode: call\n  name: friends\ndebug_level: %s\n' "$BRIDGE_TOKEN" "$VC_ID" "${DEBUG_LEVEL:-0}" > "$CONFIG"
+printf 'bots:\n- token: %s\n  vc_id: %s\n  mode: call\n  name: friends\n  approval: true\ndebug_level: %s\n' "$BRIDGE_TOKEN" "$VC_ID" "${DEBUG_LEVEL:-0}" > "$CONFIG"
 ./server.sh start jars "$CONFIG"
 status=0
 docker run --rm --network vcd-e2e -u "$(id -u):$(id -g)" -e HOME=/tmp -e DEBUG -e DEBUG_VOICE -e VC_ID -e BRIDGE_TOKEN -e SPEAKER1_TOKEN -e SPEAKER2_TOKEN \
-  -v "$PWD":/w -w /w node:22 timeout 300 node discord.test.js || status=1
+  -v "$PWD":/w -v "$E2E_DATA":/data -w /w node:22 timeout 300 node discord.test.js || status=1
 ./server.sh stop
 rm -f "$CONFIG" "$E2E_DATA/plugins/voicechat-discord/config.yml"
 exit $status

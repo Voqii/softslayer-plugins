@@ -267,20 +267,21 @@ public final class SubCommands {
                 platform.sendMessage(sender, Component.red("Stop your /dvc start session first with "), Component.white("/dvc stop"), Component.red("."));
                 return;
             }
+            CallRequests requests = getRequests(call);
+            CallRequests asking = getPendingRequestFor(player.getUuid());
+            if (asking != null && asking != requests) {
+                platform.sendMessage(sender, Component.red("You're already asking to join the call "), Component.white(asking.call().name()),
+                        Component.red(". Cancel that first with "), Component.white("/dvc hangup"), Component.red("."));
+                return;
+            }
+            if (requests == null) {
+                platform.sendMessage(sender, Component.red("Couldn't join the call. Ask a server admin to check the console."));
+                return;
+            }
 
             VoicechatPlugin.ensureVolumeCategory();
-            switch (call.join(player)) {
-                case JOINED -> platform.sendMessage(sender,
-                        Component.green("You're in the Discord voice call "), Component.white(String.valueOf(call.channelName())),
-                        Component.green(". Leave with "), Component.white("/dvc hangup"), Component.green("."));
-                case CONNECTING -> platform.sendMessage(sender, Component.yellow("Connecting to Discord..."));
-                case ALREADY_IN_CALL -> platform.sendMessage(sender,
-                        Component.yellow("You're already in this call. Leave with "), Component.white("/dvc hangup"), Component.yellow("."));
-                case NO_VOICE_CHAT -> platform.sendMessage(sender,
-                        Component.red("You need the Simple Voice Chat mod installed and connected to join a Discord call."));
-                case FAILED -> platform.sendMessage(sender,
-                        Component.red("Couldn't join the call. Ask a server admin to check the console."));
-            }
+            // With approval on (the default) this asks the people in the Discord channel first.
+            requests.request(player);
         }
 
         private static void hangup(CommandContext<?> sender) {
@@ -289,6 +290,11 @@ public final class SubCommands {
                 return;
             }
             ServerPlayer player = platform.commandContextToPlayer(sender);
+            CallRequests asking = getPendingRequestFor(player.getUuid());
+            if (asking != null && asking.cancel(player.getUuid(), "They cancelled it.")) {
+                platform.sendMessage(sender, Component.green("Cancelled your request to join the Discord call."));
+                return;
+            }
             CallSession call = getCallForPlayer(player.getUuid());
             if (call == null || !call.leave(player.getUuid())) {
                 platform.sendMessage(sender, Component.red("You're not in a Discord call."));

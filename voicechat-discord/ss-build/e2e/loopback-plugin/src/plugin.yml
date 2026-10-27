@@ -4,3 +4,8 @@ main: dev.softslayer.vcdloopback.LoopbackPlugin
 api-version: '26.3'
 depend: [ voicechat, voicechat-discord ]
 description: TEST ONLY - loopback call for voicechat-discord's end-to-end tests
+commands:
+  loopback-answer:
+    description: TEST ONLY - click a button on the fake Discord chat as someone in the channel
+  loopback-chat:
+    description: TEST ONLY - show the fake Discord chat's newest message and the bot nickname
