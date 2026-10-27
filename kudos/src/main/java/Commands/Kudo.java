@@ -184,6 +184,7 @@ public class Kudo implements CommandExecutor, TabCompleter {
         switch (args.length) {
             case 1 -> {
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (sender instanceof Player && !((Player) sender).canSee(player)) continue; // vanished
                     commandArguments.add(player.getName());
                 }
                 StringUtil.copyPartialMatches(args[0], commandArguments, tabCompletions);

@@ -22,7 +22,8 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | [`headmark/`](headmark) | lore watermark on MoreMobHeads player heads dropped in Death Valley / ClassPvP | ours | 1.1.0 for MC 26.3, tested with production's MoreMobHeads 1.0.45 on a throwaway 26.3 server; not installed anywhere yet |
 | [`blocklocker-clantags/`](blocklocker-clantags) | lets BlockLocker signs use a clan **tag** instead of the full clan name | ours | 1.0.0 |
 | [`simplestaffchat/`](simplestaffchat) | SimpleStaffChat 4.4.0-voqii: staff, dev and adult chat channels (the "admin chat" channel is the 18+ adult chat) | fork of RefracDevelopment/SimpleStaffChat 4.3.5 (MIT, upstream archived) | runs on 26.3, plus bug and security fixes. `/a` needs a `commands.yml` alias because mcMMO owns it; see its `VOQII-FORK.md` |
-| [`kudos/`](kudos) | Kudos 7.1.0-voqii: players give each other kudos (`/kudo`) | fork of Urbance/Kudos 7.1.0 (GPL-3, now on Codeberg) | fixes the chat lag you get with InteractiveChat + Kudos: kudos placeholders now read from memory instead of running ~5 queries on a fresh connection every time. On the dev server since 2026-10-19, not yet on production. See its `VOQII-FORK.md` |
+| [`kudos/`](kudos) | Kudos 7.1.1-voqii: players give each other kudos (`/kudo`) | fork of Urbance/Kudos 7.1.0 (GPL-3, now on Codeberg) | fixes the chat lag you get with InteractiveChat + Kudos: kudos placeholders now read from memory instead of running ~5 queries on a fresh connection every time. 7.1.1 also stops suggesting vanished players in tab completion. 7.1.0 on the dev server since 2026-10-19, neither on production yet. See its `VOQII-FORK.md` |
+| [`vanish-query/`](vanish-query) | VanishQuery 1.0.0: hides vanished players from the server's query player list, which the Discord #online-players status message reads (EssentialsX only hides them from the server-list ping) | ours | tested on a throwaway 26.3 server, not installed anywhere yet. No config |
 | [`kitpvp/`](kitpvp) | KitPvP 2.3.13-voqii: kit-based PvP arena with signs, kit menu and abilities | patches for jlftt/KitPvP (no license upstream, so patches only, no source or jar) | fixes kits with potions failing to load on 26.3 (`/kp kit` and `/kp preview` broke) and adds kit drop points: picking a kit in the lobby teleports you into the arena. On the dev server since 2026-10-20, not yet on production. Build steps and setup in its README |
 | [`lootchest/`](lootchest) | LootChest 2.5.9-voqii: runs on MC 26.x, per-chest respawn variance, despawn fix, `/lc mute` | fork of Guarmanda/LootChest (GPL-3) | live (`-26.3-mute` jar) |
 | [`jar-patches/`](jar-patches) | one-class fixes injected into BetterSleeping, BlueSlimeCore, DragonDropElytra and LibsDisguises | patches to third-party jars | all were needed for MC 26.2. Check whether upstream has caught up before you re-apply them. |
@@ -38,6 +39,7 @@ Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softs
 voicechat-discord 3.2.1-call.1 and SlayerGuilds `3819171` (the lag fix) and `53a1aa0` (tax/purge from `720fdfe` + the $1,000 per-member default) and `aa4de8f` (leader-only board posts), plus HeadMark 1.1.0, are in
 [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17).
 Kudos 7.1.0-voqii is in [`built-2026-10-19`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-19).
+Kudos 7.1.1-voqii and VanishQuery 1.0.0 are in [`built-2026-10-27`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-27).
 No third-party jars are committed or attached. Download those from their own pages.
 
 ## Client mods staff use (separate forks)
@@ -58,7 +60,7 @@ FZMM (head/item tools) and its library owo-lib had no builds for MC 26.2/26.3, s
 
 The build machine has no JDK or Maven installed. Everything compiles inside Docker:
 
-- Maven projects (`doorknob`, `discord-mentions`, `slayerbot`, `kudos`, SlayerGuilds, CustomJoinMessages):
+- Maven projects (`doorknob`, `discord-mentions`, `slayerbot`, `kudos`, SlayerGuilds, CustomJoinMessages; `vanish-query` has its own `build.sh`):
   `docker run --rm -u $(id -u):$(id -g) -v "$PWD":/w -w /w maven:3.9-eclipse-temurin-25 mvn -Dmaven.repo.local=/w/.m2 package`
   (run it from the project folder; jar lands in `target/`).
 - `build.sh` projects (`chat-translate/plugin`, `customfishing-minigames`, `blocklocker-clantags`, `lootchest/26.3`)

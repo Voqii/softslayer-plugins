@@ -372,6 +372,7 @@ public class Kudmin implements CommandExecutor, TabCompleter {
             case 2 -> {
                 if (args[0].equals("add") || args[0].equals("remove") || args[0].equals("clear") || args[0].equals("clearall") || args[0].equals("get")) {
                     for (Player players : Bukkit.getOnlinePlayers()) {
+                        if (sender instanceof Player && !((Player) sender).canSee(players)) continue; // vanished
                         commandArguments.add(players.getName());
                     }
                 }

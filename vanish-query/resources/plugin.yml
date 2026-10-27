@@ -1,0 +1,6 @@
+name: VanishQuery
+version: '1.0.0'
+main: me.voqii.vanishquery.VanishQuery
+api-version: '26.3'
+description: Hides vanished players from the server query player list (status bots).
+author: Voqii

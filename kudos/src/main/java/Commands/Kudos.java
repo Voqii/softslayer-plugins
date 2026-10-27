@@ -117,6 +117,7 @@ public class Kudos implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (sender instanceof Player && !((Player) sender).canSee(player)) continue; // vanished
                 playerNameList.add(player.getName());
             }
             StringUtil.copyPartialMatches(args[0], playerNameList, tabCompletions);

@@ -1,7 +1,7 @@
-# Kudos 7.1.0-voqii (SoftSlayer fork)
+# Kudos 7.1.1-voqii (SoftSlayer fork)
 
 Fork of [Urbance/Kudos](https://codeberg.org/Urbance/Kudos) 7.1.0 (GPL-3). Upstream moved from GitHub to Codeberg in
-February 2026. The code here is upstream tag `7.1.0` plus one commit, squashed in. `README.md` is still upstream's.
+February 2026. The code here is upstream tag `7.1.0` plus two commits, squashed in. `README.md` is still upstream's.
 
 ## Why it exists
 
@@ -32,6 +32,12 @@ online that's roughly 80-450 ms of blocking database work per chat line.
 - The pom writes the jar to `target/` instead of the upstream author's local server folder.
 
 Kudos's own award and `/kudos` messages still query the database directly, so they're always current.
+
+## 7.1.1-voqii: vanished players
+
+`/kudo`, `/kudos` and `/kudmin` tab completion skips players the person typing can't see, so vanished staff aren't
+suggested to normal players. Staff who can see vanished players (EssentialsX `essentials.vanish.see`) still get
+everyone. Tested on a throwaway 26.3 server with bot players; 7.1.0 suggested the vanished player there.
 
 ## Build
 
