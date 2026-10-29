@@ -43,9 +43,9 @@ Jars built since then are in [`built-2026-10-15`](https://github.com/Voqii/softs
 voicechat-discord 3.2.1-call.1 and SlayerGuilds `40aa694` (the lag fix) and `6271d38` (tax/purge from `7d3f18a` + the $1,000 per-member default) and `94eed71` (leader-only board posts), plus HeadMark 1.1.0, are in
 [`built-2026-10-17`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-17).
 Kudos 7.1.0-voqii is in [`built-2026-10-19`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-19).
-Kudos 7.1.1-voqii, VanishQuery 1.0.0, SlayerGuilds `3e163d6`, CustomJoinMessages 1.5.6-voqii, voicechat-discord 3.2.1-call.2,
-SimpleStaffChat 4.4.1-voqii, LoreSmith 1.0.1, TimingGhost 1.0.0 and TimingRecords 1.0.0 are in
-[`built-2026-10-27`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-27). KitPvP has no jar (no license upstream).
+Kudos 7.1.1-voqii, VanishQuery 1.1.0, SlayerGuilds `3e163d6`, CustomJoinMessages 1.5.6-voqii, voicechat-discord 3.2.1-call.2,
+SimpleStaffChat 4.4.1-voqii, LoreSmith 1.0.1, TimingGhost 1.0.0, TimingRecords 1.0.0 and TimingSystem 3.5-voqii.2 are in
+[`built-2026-10-29`](https://github.com/Voqii/softslayer-plugins/releases/tag/built-2026-10-29). KitPvP has no jar (no license upstream).
 No third-party jars are committed or attached. Download those from their own pages.
 
 ## Client mods staff use (separate forks)
