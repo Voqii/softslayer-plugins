@@ -1,14 +1,12 @@
-From 4519d5442be74e08bddcf6a2090f6a60c5b8c569 Mon Sep 17 00:00:00 2001
+From cd0473e25968d0091c5e1c94aeff2e21931bbba7 Mon Sep 17 00:00:00 2001
 From: Voqii <codylepine4@gmail.com>
 Date: Tue, 27 Oct 2026 03:47:46 +0000
-Subject: [PATCH 3/3] 2.3.14/2.3.15-voqii: built-in combat logging,
+Subject: [PATCH 3/5] 2.3.14/2.3.15-voqii: built-in combat logging,
  kp.inventory.keep for staff
 
 2.3.14: a hit tags both players for Combat.Logout.Seconds; while tagged, BlockedCommands are refused and logging out in an arena counts as a death credited to the last attacker. kp.combatlog.bypass skips it (default false).
 
 2.3.15: kp.inventory.keep (default op, child of kp.arena.bypass) stops KitPvP clearing your inventory on join, world entry, leave, respawn, kit pick and /kp spawn.
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  pom.xml                                       |   2 +-
  .../java/com/planetgallium/kitpvp/Game.java   |   1 +
@@ -557,6 +555,3 @@ index aa57095..05f3d23 100644
 +   kp.combatlog.bypass:
 +     description: Never put in combat, so logging out or /spawn mid-fight carries no penalty
 +     default: false
--- 
-2.43.0
-

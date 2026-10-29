@@ -1,0 +1,118 @@
+From 723a07f940b141de095dbca5952c000601c71c10 Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Tue, 27 Oct 2026 04:21:15 +0000
+Subject: [PATCH 1/2] 3.5-voqii: loneliness only while racing
+
+With loneliness.enabled, sitting in any boat anywhere hid every other player (and dropped them from the tab list). Now it only applies during a time trial or a heat; heats keep their own collision modes. The time-trial map refreshes visibility whenever a run ends, however it ends.
+---
+ pom.xml                                       |  2 +-
+ .../loneliness/LonelinessController.java      | 29 ++++++++++++++++---
+ .../system/timetrial/TimeTrialController.java | 14 ++++++++-
+ 3 files changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index 372c840..ea3482a 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -3,7 +3,7 @@
+     <modelVersion>4.0.0</modelVersion>
+     <groupId>me.makkuusen.timing.system</groupId>
+     <artifactId>TimingSystem</artifactId>
+-    <version>3.5</version>
++    <version>3.5-voqii</version>
+ 
+     <properties>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+diff --git a/src/main/java/me/makkuusen/timing/system/loneliness/LonelinessController.java b/src/main/java/me/makkuusen/timing/system/loneliness/LonelinessController.java
+index 710e231..826defa 100644
+--- a/src/main/java/me/makkuusen/timing/system/loneliness/LonelinessController.java
++++ b/src/main/java/me/makkuusen/timing/system/loneliness/LonelinessController.java
+@@ -11,6 +11,7 @@ import me.makkuusen.timing.system.heat.CollisionMode;
+ import me.makkuusen.timing.system.heat.Heat;
+ import me.makkuusen.timing.system.participant.Driver;
+ import me.makkuusen.timing.system.participant.DriverState;
++import me.makkuusen.timing.system.timetrial.TimeTrialController;
+ import org.bukkit.Bukkit;
+ import org.bukkit.entity.*;
+ import org.bukkit.event.EventHandler;
+@@ -55,8 +56,9 @@ public class LonelinessController implements Listener {
+                     // Show all drivers, activate nocol
+                     showAllOthers(player);
+                     setCollisionMode(player, false);
+-                } else if (!TimingSystem.configuration.isLonelinessEnabled()) {
+-                    // Loneliness disabled by config outside of loneliness heats
++                } else if (!TimingSystem.configuration.isLonelinessEnabled() || !isInTimeTrial(player)) {
++                    // Loneliness disabled by config outside of loneliness heats, and (SoftSlayer fork)
++                    // a boat outside a time trial isn't racing, so nobody is hidden
+                     showAllOthers(player);
+                 } else {
+                     // Hide all players
+@@ -221,6 +223,23 @@ public class LonelinessController implements Listener {
+                 .toList();
+     }
+ 
++    private static boolean isInTimeTrial(Player player) {
++        return TimeTrialController.timeTrials.containsKey(player.getUniqueId());
++    }
++
++    /**
++     * SoftSlayer fork: called whenever a player's time trial ends, however it ends (finish, cancel, leaving the
++     * boat, death, quit...), so the players hidden during the run show up again.
++     */
++    public static void onTimeTrialEnded(UUID uuid) {
++        Bukkit.getScheduler().runTask(plugin, () -> {
++            Player player = Bukkit.getPlayer(uuid);
++            if (player != null) {
++                updatePlayersVisibility(player);
++            }
++        });
++    }
++
+     private static boolean isPlayerInBoat(Player player) {
+         Entity vehicle = player.getVehicle();
+         return vehicle instanceof Boat || vehicle instanceof ChestBoat;
+@@ -240,8 +259,10 @@ public class LonelinessController implements Listener {
+         boolean viewingIsDriver = viewingMaybeDriver.isPresent();
+         Heat viewingHeat = viewingIsDriver ? viewingMaybeDriver.get().getHeat() : viewingStreakingHeat;
+ 
+-        // When loneliness is disabled by config, it only applies in loneliness heats (collision mode DISABLED)
+-        boolean lonelinessApplies = TimingSystem.configuration.isLonelinessEnabled()
++        // When loneliness is disabled by config, it only applies in loneliness heats (collision mode DISABLED).
++        // SoftSlayer fork: when enabled, it only applies while racing (a heat or a time trial), not in any boat anywhere.
++        boolean lonelinessApplies = (TimingSystem.configuration.isLonelinessEnabled()
++                        && (viewingHeat != null || isInTimeTrial(viewingPlayer)))
+                 || (viewingHeat != null && viewingHeat.getCollisionMode() == CollisionMode.DISABLED);
+ 
+         if ((canUseNocol && lonelinessDisabled) || !lonelinessApplies) {
+diff --git a/src/main/java/me/makkuusen/timing/system/timetrial/TimeTrialController.java b/src/main/java/me/makkuusen/timing/system/timetrial/TimeTrialController.java
+index e51cc09..6f14ef3 100644
+--- a/src/main/java/me/makkuusen/timing/system/timetrial/TimeTrialController.java
++++ b/src/main/java/me/makkuusen/timing/system/timetrial/TimeTrialController.java
+@@ -4,6 +4,7 @@ import me.makkuusen.timing.system.ApiUtilities;
+ import me.makkuusen.timing.system.TimingSystem;
+ import me.makkuusen.timing.system.api.events.TimeTrialAttemptEvent;
+ import me.makkuusen.timing.system.api.events.TimeTrialEarlyAttemptEvent;
++import me.makkuusen.timing.system.loneliness.LonelinessController;
+ import me.makkuusen.timing.system.track.Track;
+ import org.bukkit.Bukkit;
+ import org.bukkit.entity.Player;
+@@ -13,7 +14,18 @@ import java.util.UUID;
+ 
+ public class TimeTrialController {
+ 
+-    public static HashMap<UUID, TimeTrial> timeTrials = new HashMap<>();
++    // SoftSlayer fork: loneliness only applies during a time trial, so visibility is refreshed whenever one ends.
++    // A dozen code paths end a time trial; all of them remove it from this map.
++    public static HashMap<UUID, TimeTrial> timeTrials = new HashMap<>() {
++        @Override
++        public TimeTrial remove(Object key) {
++            TimeTrial removed = super.remove(key);
++            if (removed != null && key instanceof UUID uuid) {
++                LonelinessController.onTimeTrialEnded(uuid);
++            }
++            return removed;
++        }
++    };
+     public static HashMap<UUID, Long> elytraProtection = new HashMap<>();
+     public static HashMap<UUID, TimeTrialSession> timeTrialSessions = new HashMap<>();
+     public static HashMap<UUID, Track> lastTimeTrialTrack = new HashMap<>();

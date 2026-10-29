@@ -1,7 +1,7 @@
-# KitPvP 2.3.15-voqii (SlayerPVP)
+# KitPvP 2.3.17-voqii (SlayerPVP)
 
 Our patches for [jlftt/KitPvP](https://github.com/jlftt/KitPvP), a maintained fork of Cervinakuy's KitPvP.
-Neither repo has a license, so the source isn't copied here: only our three patches, which apply on top of
+Neither repo has a license, so the source isn't copied here: only our five patches, which apply on top of
 jlftt's commit `1833630` (2.3.13). No jar is attached for the same reason. Build it yourself, see below.
 
 ## What the patches do
@@ -39,6 +39,17 @@ That gives the layout: `/kp addspawn` points in the lobby (where you land on ent
   join, enter or leave the arena world, respawn, pick a kit or use `/kp spawn`. For staff who come in to watch
   fights. `/kp clear` still clears.
 
+**`0004` Lobby items never leave the arena (2.3.16).** Leaving the arena world (or quitting in it) always removes
+the kit selector, leave clock and other `Items.*` lobby items. Stock KitPvP only cleared anything with
+`Arena.ClearInventoryOnLeave` on (off by default), and `kp.inventory.keep` skipped that clear too, so lobby items
+could be carried into other worlds. Full clears still follow `ClearInventoryOnLeave` and `kp.inventory.keep`.
+
+**`0005` No arena respawn after leaving mid-countdown (2.3.17).** With FancyDeath, a dead player spends
+`Death.Title.Time` seconds as a spectator and can still run `/spawn`, `/hub`, `/home`... When the countdown ended,
+KitPvP respawned them into the arena wherever they were by then, so lobby items, game mode, health and food were
+applied in the other world (with Multiverse-Inventories, that world's inventory). The countdown, and the 1-tick
+respawn without FancyDeath, now stop if the player has left the arena and only undo spectator mode.
+
 Upstream 2.3.13 also adds `kp.arena.bypass` (default: op). Players with it keep their inventory, effects and
 gamemode when they enter the arena world.
 
@@ -50,7 +61,7 @@ gamemode when they enter the arena world.
     docker run --rm -u $(id -u):$(id -g) -v "$PWD":/w -w /w maven:3.9-eclipse-temurin-25 \
       mvn -q -B -Dmaven.repo.local=/w/.m2 -DskipTests package
 
-Install `target/KitPvP-2.3.15-voqii.jar`, not the `original-` one.
+Install `target/KitPvP-2.3.17-voqii.jar`, not the `original-` one.
 
 ## Setting it up on SoftSlayer
 
@@ -64,11 +75,11 @@ Install `target/KitPvP-2.3.15-voqii.jar`, not the `original-` one.
   command, not the way into the arena.
 - Signs: line 1 `[KitPvP]`, line 2 the type in lowercase (`kit`, `menu`, `refill`...), line 3 the kit name.
 
-## Status (2026-10-20)
+## Status (2026-10-29)
 
 On the dev server. The potion fix was tested by saving and reloading every potion type on a throwaway 26.3
 server. Drop points were tested end to end with a scripted bot: it picked a kit and landed on a drop point.
-Not yet on production and not yet played by real players.
+2.3.16 and 2.3.17 fix lobby items leaking into other worlds on production (bot-tested on a throwaway server).
 
 Testers need `kp.kit.*` and `kp.ability.*`. Without `kp.ability.*`, 10 of the 13 stock kits can't use their
 ability items.

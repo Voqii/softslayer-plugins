@@ -1,6 +1,6 @@
 # SlayerGuilds — test checklist (dialog menus + 2026-10-16 applications fixes)
 
-Build `2.19.3-SNAPSHOT-aa4de8f` (branch `dialog-ui`). Install steps: `INSTALL.md`.
+Build `2.19.3-SNAPSHOT-94eed71` (branch `dialog-ui`). Install steps: `INSTALL.md`.
 Needs Purpur/Paper **26.1.2 or newer** (no Spigot).
 
 Use a **non-op** account for most of this, plus one op for section 6. Ops see every button, which hides
@@ -120,7 +120,7 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 - [ ] Turning applications off keeps the pending ones in the list.
 - [ ] **Restart the server:** pending applications are still there.
 
-## 11. Slayer Score lag fix (`3819171`)
+## 11. Slayer Score lag fix (`40aa694`)
 
 - [ ] A few seconds after start the console says `Slayer Score: loaded mcMMO levels for N players in X ms
       (off the main thread)`, from a `Craft Scheduler Thread`, not the `Server thread`.
@@ -130,7 +130,7 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
 - [ ] Right after a restart, if a guild's tax is due, the console may say `Guild tax: N guild(s) due but their
       Slayer Score is still loading; retrying next hour.` — that guild gets charged on the next hourly check.
 
-## 12. Tax, purge and KDR reset (`720fdfe`)
+## 12. Tax, purge and KDR reset (`7d3f18a`)
 
 - [ ] Console on start: `Guild tax — on: $1,000 per member, min $1,000, max $10,000, every 30d, grace 1 cycle(s).`
 - [ ] `/guild upkeep` and Guild info → tax: "$X per member a month", the member count, minimum and cap, and the
@@ -141,7 +141,7 @@ Needs a leader account and a guildless account. Open the guild first: Leader too
       `confirm`: a warning with the player count, nothing reset.
 - [ ] Staff → Server actions has no KDR reset button. Resetting one player's KDR from Player actions still works.
 
-## 13. Guild board posting (`aa4de8f`)
+## 13. Guild board posting (`94eed71`)
 
 - [ ] As a **trusted non-leader** with no special rank: Guild → Bulletin board has no "Post a message" button,
       and `/guild bb add hi` is refused ("you must be leader…").

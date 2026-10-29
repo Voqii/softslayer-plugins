@@ -1,0 +1,65 @@
+From 07382e9c7e7e65e64a7f638ac52ce2e48abfc8b9 Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Tue, 27 Oct 2026 05:01:09 +0000
+Subject: [PATCH 5/5] 2.3.17-voqii: no arena respawn after leaving the arena
+ mid-countdown
+
+With FancyDeath, a dead player spends Death.Title.Time seconds as a spectator and can still run /spawn, /hub, /home... When the countdown ended, KitPvP respawned them into the arena wherever they were by then: lobby items, game mode, health and food were applied in the other world, which with Multiverse-Inventories is that world's inventory. The countdown (and the 1-tick respawn without FancyDeath) now stops if the player has left the arena, and only undoes spectator mode.
+---
+ pom.xml                                           |  2 +-
+ .../kitpvp/listener/DeathListener.java            | 15 +++++++++++++++
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/pom.xml b/pom.xml
+index 7cda1af..fbd37ea 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -6,7 +6,7 @@
+ 
+     <groupId>com.planetgallium</groupId>
+     <artifactId>KitPvP</artifactId>
+-    <version>2.3.16-voqii</version>
++    <version>2.3.17-voqii</version>
+     <packaging>jar</packaging>
+ 
+     <name>${project.artifactId}</name>
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java b/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
+index 372a45f..8cf4fdc 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/DeathListener.java
+@@ -4,6 +4,7 @@ import com.cryptomorin.xseries.XSound;
+ import com.cryptomorin.xseries.messages.Titles;
+ import com.planetgallium.kitpvp.util.*;
+ import org.bukkit.Effect;
++import org.bukkit.Bukkit;
+ import org.bukkit.GameMode;
+ import org.bukkit.Location;
+ import org.bukkit.Sound;
+@@ -121,6 +122,17 @@ public class DeathListener implements Listener {
+ 						return;
+ 					}
+ 
++					// Left the arena during the countdown (/spawn, /hub, /home... still work as a spectator). Respawning
++					// them here would hand out the lobby items and reset XP in whatever world they're in now, which with
++					// Multiverse-Inventories means their other world's inventory. Only undo the spectator mode.
++					if (!Toolkit.inArena(victim)) {
++						if (victim.getGameMode() == GameMode.SPECTATOR) {
++							victim.setGameMode(Bukkit.getDefaultGameMode());
++						}
++						cancel();
++						return;
++					}
++
+ 					if (time != 0) {
+ 						Titles.sendTitle(victim, 0, 21, 0,
+ 								config.fetchString("Death.Title.Title"),
+@@ -151,6 +163,9 @@ public class DeathListener implements Listener {
+ 			new BukkitRunnable() {
+ 				@Override
+ 				public void run() {
++					if (!victim.isOnline() || !Toolkit.inArena(victim)) {
++						return; // left the arena within the tick; see the FancyDeath countdown above
++					}
+ 					arena.addPlayer(victim, true, config.getBoolean("Arena.GiveItemsOnRespawn"));
+ 					Toolkit.runCommands(victim, config.getStringList("Respawn.Commands"),
+ 							"none", "none");

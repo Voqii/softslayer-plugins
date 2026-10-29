@@ -1,0 +1,107 @@
+From ce6ae458104bcc41309a3f373bc36be163293464 Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Tue, 27 Oct 2026 04:15:00 +0000
+Subject: [PATCH 4/5] 2.3.16-voqii: lobby items never leave the arena
+
+Leaving the arena world (or quitting in it) now always removes the kit selector, leave clock and other Items.* lobby items. Stock KitPvP only cleared anything with Arena.ClearInventoryOnLeave on (off by default), and 2.3.15's kp.inventory.keep skipped that clear too, so lobby items could be carried into other worlds. Full clears still follow ClearInventoryOnLeave and kp.inventory.keep.
+---
+ pom.xml                                       |  2 +-
+ .../com/planetgallium/kitpvp/game/Arena.java  | 47 +++++++++++++++++--
+ .../kitpvp/listener/LeaveListener.java        |  6 +--
+ 3 files changed, 45 insertions(+), 10 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index 76bcadc..7cda1af 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -6,7 +6,7 @@
+ 
+     <groupId>com.planetgallium</groupId>
+     <artifactId>KitPvP</artifactId>
+-    <version>2.3.15-voqii</version>
++    <version>2.3.16-voqii</version>
+     <packaging>jar</packaging>
+ 
+     <name>${project.artifactId}</name>
+diff --git a/src/main/java/com/planetgallium/kitpvp/game/Arena.java b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+index 76f9944..abb5786 100644
+--- a/src/main/java/com/planetgallium/kitpvp/game/Arena.java
++++ b/src/main/java/com/planetgallium/kitpvp/game/Arena.java
+@@ -139,10 +139,7 @@ public class Arena {
+ 	}
+ 	
+ 	public void deletePlayer(Player p) {
+-		if (config.getBoolean("Arena.ClearInventoryOnLeave") && !Toolkit.keepsInventory(p)) {
+-			p.getInventory().clear();
+-			p.getInventory().setArmorContents(null);
+-		}
++		clearInventoryOnLeave(p);
+ 
+ 		CacheManager.removePlayerAbilityCooldowns(p.getName());
+ 		CacheManager.getPotionSwitcherUsers().remove(p.getName());
+@@ -152,6 +149,48 @@ public class Arena {
+ 		stats.pushCachedStatsToDatabase(p.getName(), true);
+ 	}
+ 	
++	/**
++	 * Clears the inventory of a player leaving the arena (Arena.ClearInventoryOnLeave). Everyone else, including
++	 * players who keep their inventory (kp.inventory.keep), still loses the lobby items (kit selector, leave
++	 * clock...), so those never leave the arena.
++	 */
++	public void clearInventoryOnLeave(Player p) {
++		if (config.getBoolean("Arena.ClearInventoryOnLeave") && !Toolkit.keepsInventory(p)) {
++			p.getInventory().clear();
++			p.getInventory().setArmorContents(null);
++			return;
++		}
++
++		removeArenaItems(p);
++	}
++
++	/** Removes the items {@link #giveArenaItems} hands out, matched the way ItemListener matches clicks on them. */
++	public void removeArenaItems(Player p) {
++		ItemStack[] contents = p.getInventory().getContents();
++		for (int slot = 0; slot < contents.length; slot++) {
++			if (isArenaItem(contents[slot])) {
++				p.getInventory().setItem(slot, null);
++			}
++		}
++		if (isArenaItem(p.getItemOnCursor())) {
++			p.setItemOnCursor(null);
++		}
++	}
++
++	private boolean isArenaItem(ItemStack item) {
++		ConfigurationSection items = config.getConfigurationSection("Items");
++		if (item == null || items == null) return false;
++
++		for (String identifier : items.getKeys(false)) {
++			String itemPath = "Items." + identifier;
++			if (Toolkit.hasMatchingMaterial(item, config.fetchString(itemPath + ".Material")) &&
++					Toolkit.hasMatchingDisplayName(item, config.fetchString(itemPath + ".Name"))) {
++				return true;
++			}
++		}
++		return false;
++	}
++
+ 	public void giveArenaItems(Player p) {
+ 		ConfigurationSection items = config.getConfigurationSection("Items");
+ 
+diff --git a/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java b/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
+index 5f45649..50fe02b 100644
+--- a/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
++++ b/src/main/java/com/planetgallium/kitpvp/listener/LeaveListener.java
+@@ -36,11 +36,7 @@ public class LeaveListener implements Listener {
+ 		if (Toolkit.inArena(e.getFrom())) { // if they left from a kitpvp arena
+ 			Player p = e.getPlayer();
+ 
+-			if (plugin.getResources().getConfig().getBoolean("Arena.ClearInventoryOnLeave") && !Toolkit.keepsInventory(p)) {
+-				p.getInventory().clear();
+-				p.getInventory().setArmorContents(null);
+-			}
+-
++			arena.clearInventoryOnLeave(p);
+ 			arena.removePlayer(p);
+ 			// no need to clear stats from cache; that will be done on player quit above
+ 		}

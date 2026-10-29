@@ -1,0 +1,83 @@
+From 34d09147b1a7dcdcc3c29fa7531130aff5494517 Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Thu, 29 Oct 2026 05:57:01 +0000
+Subject: [PATCH 2/2] 3.5-voqii.2: /t times shows each player's track stats on
+ hover
+
+Hovering a time in /t times shows that player's position, best time and date, gap to #1, finishes, attempts and time spent on the track, the same numbers the /tt menu shows for your own tracks. Only the time carries the hover, so the name stays free for chat plugins' own hovers (InteractiveChat profiles).
+---
+ pom.xml                                       |  2 +-
+ .../timing/system/commands/CommandTrack.java  |  8 +++++-
+ .../makkuusen/timing/system/theme/Theme.java  | 27 +++++++++++++++++++
+ 3 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index ea3482a..ad71e1b 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -3,7 +3,7 @@
+     <modelVersion>4.0.0</modelVersion>
+     <groupId>me.makkuusen.timing.system</groupId>
+     <artifactId>TimingSystem</artifactId>
+-    <version>3.5-voqii</version>
++    <version>3.5-voqii.2</version>
+ 
+     <properties>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+diff --git a/src/main/java/me/makkuusen/timing/system/commands/CommandTrack.java b/src/main/java/me/makkuusen/timing/system/commands/CommandTrack.java
+index 7500522..62c609a 100644
+--- a/src/main/java/me/makkuusen/timing/system/commands/CommandTrack.java
++++ b/src/main/java/me/makkuusen/timing/system/commands/CommandTrack.java
+@@ -350,7 +350,13 @@ public class CommandTrack extends BaseCommand {
+                 break;
+             }
+             TimeTrialFinish finish = topList.get(i);
+-            commandSender.sendMessage(theme.getTimesRow(String.valueOf(i + 1), finish.getPlayer().getName(), ApiUtilities.formatAsTime(finish.getTime())));
++            var tt = track.getTimeTrials();
++            var racer = finish.getPlayer();
++            String behind = i == 0 ? null : "+" + ApiUtilities.formatAsTime(finish.getTime() - topList.get(0).getTime());
++            Component hover = theme.getTrackStatsHover(racer.getName(), i + 1, ApiUtilities.formatAsTime(finish.getTime()),
++                    ApiUtilities.niceDate(finish.getDate()), behind, tt.getPlayerTotalFinishes(racer), tt.getPlayerTotalAttempts(racer),
++                    ApiUtilities.formatAsTimeSpent(tt.getPlayerTotalTimeSpent(racer)));
++            commandSender.sendMessage(theme.getTimesRow(String.valueOf(i + 1), racer.getName(), ApiUtilities.formatAsTime(finish.getTime()), hover));
+         }
+ 
+         int pageEnd = (int) Math.ceil(((double) topListSize) / ((double) itemsPerPage));
+diff --git a/src/main/java/me/makkuusen/timing/system/theme/Theme.java b/src/main/java/me/makkuusen/timing/system/theme/Theme.java
+index fa24631..4105861 100644
+--- a/src/main/java/me/makkuusen/timing/system/theme/Theme.java
++++ b/src/main/java/me/makkuusen/timing/system/theme/Theme.java
+@@ -168,6 +168,33 @@ public class Theme {
+         return Component.text(row + ".").color(getPrimary()).append(Component.space()).append(Component.text(first).color(getSecondary())).append(Component.space()).append(Component.text("|").color(getPrimary())).append(Component.space()).append(Component.text(second).color(getSecondary()));
+     }
+ 
++    /**
++     * SoftSlayer fork: a /t times row whose time shows the player's stats for the track on hover (the same numbers
++     * the /tt menu shows for your own tracks). Only the time carries the hover, so whatever another plugin puts on
++     * the name (e.g. an InteractiveChat profile) is left alone.
++     */
++    public Component getTimesRow(String row, String name, String time, Component timeHover) {
++        return Component.text(row + ".").color(getPrimary()).append(Component.space()).append(Component.text(name).color(getSecondary())).append(Component.space()).append(Component.text("|").color(getPrimary())).append(Component.space()).append(Component.text(time).color(getSecondary()).hoverEvent(HoverEvent.showText(timeHover)));
++    }
++
++    /** SoftSlayer fork: the hover for a /t times row. */
++    public Component getTrackStatsHover(String name, int position, String bestTime, String setOn, String behindFirst, int finishes, int attempts, String timeSpent) {
++        Component c = Component.text(name).color(getSecondary());
++        c = c.appendNewline().append(statLine("Position: ", String.valueOf(position)));
++        c = c.appendNewline().append(statLine("Best time: ", bestTime)).append(Component.text(" (" + setOn + ")").color(getPrimary()));
++        if (behindFirst != null) {
++            c = c.appendNewline().append(statLine("Behind #1: ", behindFirst));
++        }
++        c = c.appendNewline().append(statLine("Finishes: ", String.valueOf(finishes)));
++        c = c.appendNewline().append(statLine("Attempts: ", String.valueOf(attempts)));
++        c = c.appendNewline().append(statLine("Time spent: ", timeSpent));
++        return c;
++    }
++
++    private Component statLine(String label, String value) {
++        return Component.text(label).color(getPrimary()).append(Component.text(value).color(getSecondary()));
++    }
++
+     public Component getTimesRow(String row, String first, String second, String third) {
+         return Component.text(row + ".").color(getPrimary()).append(Component.space()).append(Component.text(first).color(getSecondary())).append(Component.space()).append(Component.text("|").color(getPrimary())).append(Component.space()).append(Component.text(second).color(getSecondary())).append(Component.space()).append(Component.text("|").color(getPrimary())).append(Component.space()).append(Component.text(third).color(getSecondary()));
+     }

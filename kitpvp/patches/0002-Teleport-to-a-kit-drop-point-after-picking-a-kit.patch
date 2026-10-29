@@ -1,14 +1,12 @@
-From bf0bc00cf845ef1fb2f776c4885e5f4ac2802eba Mon Sep 17 00:00:00 2001
+From 0f1dbcdedfcedc8704e1a05aa3ea0ea6f8bf7294 Mon Sep 17 00:00:00 2001
 From: Voqii <codylepine4@gmail.com>
 Date: Tue, 20 Oct 2026 00:00:40 +0000
-Subject: [PATCH 2/3] Teleport to a kit drop point after picking a kit
+Subject: [PATCH 2/5] Teleport to a kit drop point after picking a kit
 
 /kp adddrop saves a drop point for the current world, /kp deldrops removes
 them. With Arena.TeleportOnKit (default true) a player who picks a kit is sent
 to a random drop point a tick later; worlds without drop points behave as
 before. Arena spawns stay the lobby (entry, death, /kp spawn).
-
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
  .../kitpvp/command/MainCommand.java           | 37 +++++++++++++++++++
  .../com/planetgallium/kitpvp/game/Arena.java  | 15 ++++++++
@@ -150,6 +148,3 @@ index af0101f..52d3ee8 100644
      Reload: '%prefix% &7Successfully reloaded the configurations and cleared caches.'
      Cleared: '%prefix% &7Your kit has been cleared.'
      ClearedOther: '%prefix% &7You cleared &b%player%''s &7kit.'
--- 
-2.43.0
-

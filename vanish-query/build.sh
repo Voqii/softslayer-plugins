@@ -4,6 +4,6 @@ set -e
 cd "$(dirname "$0")"
 V=$(sed -n "s/^version: '\(.*\)'/\1/p" resources/plugin.yml)
 rm -rf build && mkdir -p build/classes
-docker run --rm -u 1000:1000 -v "$PWD":/w -v "${LIBS:-$HOME/minecraft/data/libraries}":/libs:ro -w /w eclipse-temurin:25-jdk sh -c \
-  'javac --release 21 -d build/classes -cp "$(find /libs -name "*.jar" | tr "\n" ":")" $(find src -name "*.java") && cp resources/plugin.yml build/classes/ && cd build/classes && jar cf ../VanishQuery-'"$V"'.jar .'
+docker run --rm -u 1000:1000 -v "$PWD":/w -v "${LIBS:-$HOME/minecraft/data/libraries}":/libs:ro -v "${ESS:-$HOME/ss-update/release/plugins/EssentialsX-2.22.1-dev+27-e70bdb8.jar}":/ess/EssentialsX.jar:ro -w /w eclipse-temurin:25-jdk sh -c \
+  'javac --release 21 -d build/classes -cp "$(find /libs /ess -name "*.jar" | tr "\n" ":")" $(find src -name "*.java") && cp resources/plugin.yml build/classes/ && cd build/classes && jar cf ../VanishQuery-'"$V"'.jar .'
 ls -l build/*.jar
