@@ -1,0 +1,88 @@
+From e37e9fde756b7278d1c1663fb47957332505994d Mon Sep 17 00:00:00 2001
+From: Voqii <codylepine4@gmail.com>
+Date: Fri, 30 Oct 2026 19:08:05 +0000
+Subject: [PATCH 3/3] 3.5-voqii.3: no reset for a stale BoatUtils mode at the
+ start of a run
+
+TimingSystem only sends a track's BoatUtils mode when it spawns the boat, and clears what it remembers when a run
+ends early, so driving onto a start line (or starting again after leaving the boat, a teleport, a death) failed
+the mode check and reset the player, even on vanilla tracks. Now the track's mode is sent when that happens.
+Only an OpenBoatUtils too old for the track's mode still ends the run, in place, with the 'later version'
+message (a reset just started the same failing run again).
+---
+ pom.xml                                       |  2 +-
+ .../makkuusen/timing/system/TSListener.java   |  8 +++---
+ .../system/boatutils/BoatUtilsManager.java    | 27 +++++++++++++++++++
+ 3 files changed, 33 insertions(+), 4 deletions(-)
+
+diff --git a/pom.xml b/pom.xml
+index ad71e1b..a32acfc 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -3,7 +3,7 @@
+     <modelVersion>4.0.0</modelVersion>
+     <groupId>me.makkuusen.timing.system</groupId>
+     <artifactId>TimingSystem</artifactId>
+-    <version>3.5-voqii.2</version>
++    <version>3.5-voqii.3</version>
+ 
+     <properties>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+diff --git a/src/main/java/me/makkuusen/timing/system/TSListener.java b/src/main/java/me/makkuusen/timing/system/TSListener.java
+index 0b11c74..5c3ebf1 100644
+--- a/src/main/java/me/makkuusen/timing/system/TSListener.java
++++ b/src/main/java/me/makkuusen/timing/system/TSListener.java
+@@ -470,10 +470,12 @@ public class TSListener implements Listener {
+             } else if (player.getInventory().getBoots() != null && player.getInventory().getBoots().containsEnchantment(Enchantment.SOUL_SPEED) && track.getTrackOptions().hasOption(TrackOption.NO_SOUL_SPEED)) {
+                 Text.send(player, Error.NO_SOUL_SPEED);
+                 TimeTrialController.playerLeavingMap(player.getUniqueId());
+-            } else if (!BoatUtilsManager.isPlayerUsingCorrectMode(player, track)) {
+-                Text.send(player, Error.WRONG_BOAT_UTILS_MODE);
++            } else if (!BoatUtilsManager.isPlayerUsingCorrectMode(player, track) && !BoatUtilsManager.applyTrackMode(player, track)) {
++                // SoftSlayer fork: only when OpenBoatUtils is too old for this track. End the run where they are:
++                // a reset would just start the same failing run again.
++                Text.send(player, Error.WRONG_OR_MISSING_BOATUTILS);
+                 ApiUtilities.removeBoatUtilsEffects(player);
+-                timeTrial.playerResetMap();
++                TimeTrialController.playerLeavingMap(player.getUniqueId());
+             }
+ 
+         }
+diff --git a/src/main/java/me/makkuusen/timing/system/boatutils/BoatUtilsManager.java b/src/main/java/me/makkuusen/timing/system/boatutils/BoatUtilsManager.java
+index 0f54899..3110c7f 100644
+--- a/src/main/java/me/makkuusen/timing/system/boatutils/BoatUtilsManager.java
++++ b/src/main/java/me/makkuusen/timing/system/boatutils/BoatUtilsManager.java
+@@ -123,6 +123,33 @@ public class BoatUtilsManager {
+         }
+     }
+ 
++    /**
++     * SoftSlayer fork: the remembered mode goes stale (it's only sent when TimingSystem spawns the boat, and ending a
++     * run clears it), so a run that starts with the wrong one gets the track's mode sent right then instead of a reset.
++     * Returns false only when the player's OpenBoatUtils is too old for the track's mode (they've been warned).
++     */
++    public static boolean applyTrackMode(Player player, Track track) {
++        Integer customModeId = track.getCustomBoatUtilsModeId();
++        if (customModeId != null) {
++            CustomBoatUtilsMode custom = TimingSystem.getTrackDatabase().getCustomBoatUtilsModeFromId(customModeId);
++            if (custom == null || !custom.applyToPlayer(player)) {
++                return false;
++            }
++            playerCustomBoatUtilsModeId.put(player.getUniqueId(), customModeId);
++            return true;
++        }
++        BoatUtilsMode mode = track.getBoatUtilsMode();
++        TPlayer tPlayer = TSDatabase.getPlayer(player.getUniqueId());
++        if (mode != BoatUtilsMode.VANILLA && tPlayer.hasBoatUtils() && tPlayer.getBoatUtilsVersion() < mode.getRequiredVersion()) {
++            sendBoatUtilsModePluginMessage(player, mode, track, true); // only shows the "update OpenBoatUtils" warning
++            return false;
++        }
++        CustomBoatUtilsMode.resetPlayer(player);
++        playerCustomBoatUtilsModeId.remove(player.getUniqueId());
++        sendBoatUtilsModePluginMessage(player, mode, track, true);
++        return isPlayerUsingCorrectMode(player, track);
++    }
++
+     public static List<BoatUtilsMode> getAvailableModes(int version) {
+         return Arrays.stream(BoatUtilsMode.values()).filter(mode -> mode.getRequiredVersion() <= version).toList();
+     }

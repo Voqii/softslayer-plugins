@@ -1,7 +1,7 @@
 From 34d09147b1a7dcdcc3c29fa7531130aff5494517 Mon Sep 17 00:00:00 2001
 From: Voqii <codylepine4@gmail.com>
 Date: Thu, 29 Oct 2026 05:57:01 +0000
-Subject: [PATCH 2/2] 3.5-voqii.2: /t times shows each player's track stats on
+Subject: [PATCH 2/3] 3.5-voqii.2: /t times shows each player's track stats on
  hover
 
 Hovering a time in /t times shows that player's position, best time and date, gap to #1, finishes, attempts and time spent on the track, the same numbers the /tt menu shows for your own tracks. Only the time carries the hover, so the name stays free for chat plugins' own hovers (InteractiveChat profiles).

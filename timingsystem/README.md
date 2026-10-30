@@ -1,4 +1,4 @@
-# TimingSystem 3.5-voqii.2
+# TimingSystem 3.5-voqii.3
 
 Our patches for [FrostHexABG/TimingSystem](https://github.com/FrostHexABG/TimingSystem) (MPL-2.0), the `/tt`
 boat-racing plugin. They apply on top of upstream's `3.5` release (commit `132ccf8`). Under the MPL, the
@@ -15,6 +15,13 @@ best time and its date, gap to #1, finishes, attempts and time spent on the trac
 menu shows for your own tracks. Only the time carries the hover, so the name stays free for chat plugins' own
 hovers (InteractiveChat profiles).
 
+**`0003` No reset for a stale BoatUtils mode (3.5-voqii.3).** TimingSystem only sends a track's BoatUtils mode when
+it spawns your boat (`/tt <track>`, a reset), and forgets it when a run ends early (leaving the boat, a teleport, a
+death). Driving onto a start line yourself, or coming from another track, then failed the mode check with "You did not
+have the correct BoatUtilsMode active" and reset you to the track spawn, even on vanilla tracks. Now the track's mode
+is sent at that moment and the run carries on. Only an OpenBoatUtils too old for the track's mode still ends the run,
+where you are, with "You need a later version of boat utils" (resetting just started the same failing run again).
+
 ## Build
 
     git clone https://github.com/FrostHexABG/TimingSystem.git && cd TimingSystem
@@ -28,8 +35,11 @@ into the local Maven repo made from the `org/shanerx/mojang` (and its unirest, A
 json-simple) classes bundled in the official 3.5 jar. The resulting jar has the same class list as the official
 one plus `TimeTrialController$1`.
 
-## Status (2026-10-29)
+## Status (2026-10-30)
 
 Both tested with scripted bots on a throwaway 26.3 server: outside a time trial other players stay visible in a
 boat, during one they're hidden, and after it they're back; the `/t times` hovers show the right numbers.
+`0003` was tested the same way: on 3.5-voqii.2 a stale mode reset the run in all four cases (vanilla track, BA track
+without the mod, coming from a Rally track, outdated mod); on 3.5-voqii.3 the first three keep going with the right mode
+and the outdated mod gets the "later version" message.
 Not on the dev server or production yet.
