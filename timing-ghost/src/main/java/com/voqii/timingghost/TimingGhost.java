@@ -6,6 +6,7 @@ import me.makkuusen.timing.system.api.events.TimeTrialFinishEvent;
 import me.makkuusen.timing.system.api.events.TimeTrialStartEvent;
 import me.makkuusen.timing.system.timetrial.TimeTrial;
 import me.makkuusen.timing.system.timetrial.TimeTrialController;
+import me.makkuusen.timing.system.timetrial.TimeTrialFinish;
 import me.makkuusen.timing.system.track.Track;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -33,6 +34,8 @@ import java.util.UUID;
 public final class TimingGhost extends JavaPlugin implements Listener {
 
     private final Map<UUID, Session> sessions = new HashMap<>();
+    // what /ttghost next last told each player ("trackId:ghostOwner"), so every new attempt doesn't repeat it
+    private final Map<UUID, String> announcedNext = new HashMap<>();
     private final double[] scratch = new double[4];
     private NamespacedKey modeKey;
     private GhostStore store;
@@ -99,6 +102,7 @@ public final class TimingGhost extends JavaPlugin implements Listener {
                 case OFF -> null;
                 case PB -> player.getUniqueId();
                 case BEST -> store.fastestOwner(track.getId());
+                case NEXT -> nextOwner();
             };
             if (owner == null) {
                 return;
@@ -109,6 +113,44 @@ public final class TimingGhost extends JavaPlugin implements Listener {
                     ghost = new GhostRenderer(TimingGhost.this, player, rec);
                 }
             });
+        }
+
+        /**
+         * The ghost of the player ranked directly above this one on the track's leaderboard. Players above
+         * without a saved ghost (times set before TimingGhost, or never beaten since) are skipped, so it's the
+         * closest faster player we have a ghost for. Unranked players get the slowest ranked ghost; #1 races
+         * their own best run.
+         */
+        UUID nextOwner() {
+            List<TimeTrialFinish> top = track.getTimeTrials().getTopList(-1);
+            UUID me = player.getUniqueId();
+            int mine = top.size();
+            for (int i = 0; i < top.size(); i++) {
+                if (top.get(i).getPlayer() != null && me.equals(top.get(i).getPlayer().getUniqueId())) {
+                    mine = i;
+                    break;
+                }
+            }
+            for (int i = mine - 1; i >= 0; i--) {
+                var tp = top.get(i).getPlayer();
+                UUID above = tp == null ? null : tp.getUniqueId();
+                if (above != null && store.bestTime(track.getId(), above) != null) {
+                    announceNext(above, Component.text("Racing #" + (i + 1) + " " + tp.getName()
+                            + "'s ghost (" + formatTime(store.bestTime(track.getId(), above)) + ")."
+                            + (i + 1 < mine ? " Nobody between you and them has a ghost yet." : ""), NamedTextColor.AQUA));
+                    return above;
+                }
+            }
+            announceNext(me, Component.text(mine == 0 ? "You're #1 here, so you're racing your own best run."
+                    : "Nobody above you has a ghost yet, so you're racing your own best run.", NamedTextColor.AQUA));
+            return me;
+        }
+
+        private void announceNext(UUID owner, Component message) {
+            String key = track.getId() + ":" + owner;
+            if (!key.equals(announcedNext.put(player.getUniqueId(), key))) {
+                player.sendMessage(message);
+            }
         }
 
         void record(long elapsed) {
@@ -198,6 +240,7 @@ public final class TimingGhost extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        announcedNext.remove(event.getPlayer().getUniqueId());
         Session s = sessions.remove(event.getPlayer().getUniqueId());
         if (s != null) {
             s.removeGhost();
@@ -220,7 +263,7 @@ public final class TimingGhost extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String sub = args.length == 0 ? "" : args[0].toLowerCase();
         switch (sub) {
-            case "off", "pb", "best" -> {
+            case "off", "pb", "best", "next" -> {
                 if (!(sender instanceof Player player)) {
                     sender.sendMessage("Only players can pick a ghost.");
                     return true;
@@ -235,8 +278,10 @@ public final class TimingGhost extends JavaPlugin implements Listener {
                     case OFF -> "Ghosts off.";
                     case PB -> "You'll race your own best run.";
                     case BEST -> "You'll race the fastest ghost on each track.";
+                    case NEXT -> "You'll race the ghost of the player ranked right above you on each track.";
                 }, NamedTextColor.AQUA));
                 Session s = sessions.get(player.getUniqueId());
+                announcedNext.remove(player.getUniqueId());
                 if (s != null) {
                     s.removeGhost();
                     s.loadGhost();
@@ -257,7 +302,8 @@ public final class TimingGhost extends JavaPlugin implements Listener {
             default -> {
                 if (sender instanceof Player player) {
                     sender.sendMessage(Component.text("Ghost: " + modeOf(player).name().toLowerCase()
-                            + ". Use /ttghost off, /ttghost pb (your best run) or /ttghost best (fastest on the track).", NamedTextColor.AQUA));
+                            + ". Use /ttghost off, /ttghost pb (your best run), /ttghost best (fastest on the track)"
+                            + " or /ttghost next (the player ranked right above you).", NamedTextColor.AQUA));
                 } else {
                     sender.sendMessage("/ttghost clear <track> [player], /ttghost reload");
                 }
@@ -297,7 +343,7 @@ public final class TimingGhost extends JavaPlugin implements Listener {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> options = new ArrayList<>();
         if (args.length == 1) {
-            options.addAll(List.of("off", "pb", "best"));
+            options.addAll(List.of("off", "pb", "best", "next"));
             if (sender.hasPermission("timingghost.admin")) {
                 options.addAll(List.of("clear", "reload"));
             }

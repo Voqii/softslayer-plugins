@@ -29,7 +29,7 @@ This repo is the succession plan. If you're picking the server up from Voqii, st
 | [`lootchest/`](lootchest) | LootChest 2.5.9-voqii: runs on MC 26.x, per-chest respawn variance, despawn fix, `/lc mute` | fork of Guarmanda/LootChest (GPL-3) | live (`-26.3-mute` jar) |
 | [`jar-patches/`](jar-patches) | one-class fixes injected into BetterSleeping, BlueSlimeCore, DragonDropElytra and LibsDisguises | patches to third-party jars | all were needed for MC 26.2. Check whether upstream has caught up before you re-apply them. |
 | [`loresmith/`](loresmith) | LoreSmith 1.0.1: `/lore` opens menus to rename items and write coloured lore (gradients, rainbow, colour picker), no client mod needed | ours | on the dev server, tested with the bot client; not on production |
-| [`timing-ghost/`](timing-ghost) | TimingGhost 1.0.0: race a see-through ghost of your best TimingSystem time-trial run (`/ttghost`) | ours (TimingSystem add-on) | on the dev server, ghost visuals not yet checked by a person; not on production |
+| [`timing-ghost/`](timing-ghost) | TimingGhost 1.1.0: race a see-through ghost of your best TimingSystem time-trial run, the track record, or the player ranked right above you (`/ttghost pb`, `best` or `next`) | ours (TimingSystem add-on) | on the dev server, ghost visuals not yet checked by a person; not on production |
 | [`timing-records/`](timing-records) | TimingRecords 1.0.0: announces new #1 TimingSystem time-trial records in chat | ours (TimingSystem add-on) | on the dev server; not on production |
 | [`tools/mc-dialog-probe/`](tools/mc-dialog-probe) | scripted bot client for testing SlayerGuilds' dialog/chest menus | ours (test tool) | — |
 

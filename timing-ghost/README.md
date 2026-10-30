@@ -15,6 +15,7 @@ Ghosts only exist for runs set after the plugin is installed. TimingSystem only 
 |---|---|---|
 | `/ttghost pb` | everyone | race your own best run (default) |
 | `/ttghost best` | everyone | race the fastest ghost on the track |
+| `/ttghost next` | everyone | race the player ranked right above you on the track (8th races 7th). Players above without a ghost are skipped; #1 races their own best |
 | `/ttghost off` | everyone | no ghost |
 | `/ttghost clear <track> [player]` | `timingghost.admin` | delete one player's ghost, or every ghost on the track |
 | `/ttghost reload` | `timingghost.admin` | reload config.yml and the ghost files |
@@ -25,4 +26,4 @@ Alias `/tghost`. `/ghost` itself belongs to TimingSystem (race ghosting in heats
 
     docker run --rm -v $PWD:/src -v m2cache:/root/.m2 -w /src maven:3.9-eclipse-temurin-25 mvn -q -B package
 
-Put TimingSystem 3.5's release jar (from its GitHub releases page) at `lib/TimingSystem-3.5.jar` first; it isn't committed here. The one we built against has sha256 b4362608ca596162882c036d1d6c04a2d82eee1df1b56053ca66b50a25d41a37.
+`lib/TimingSystem-3.5.jar` is the upstream release jar (sha256 b4362608ca596162882c036d1d6c04a2d82eee1df1b56053ca66b50a25d41a37).

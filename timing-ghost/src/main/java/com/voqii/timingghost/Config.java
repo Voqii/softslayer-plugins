@@ -11,7 +11,7 @@ record Config(Mode defaultMode, Material material, boolean glow, Color glowColor
               float headYaw, int maxRunSeconds) {
 
     enum Mode {
-        OFF, PB, BEST;
+        OFF, PB, BEST, NEXT;
 
         static Mode parse(String s) {
             try {
@@ -25,7 +25,7 @@ record Config(Mode defaultMode, Material material, boolean glow, Color glowColor
     static Config load(FileConfiguration cfg, Logger log) {
         Mode mode = Mode.parse(cfg.getString("default-mode"));
         if (mode == null) {
-            log.warning("default-mode must be pb, best or off; using pb");
+            log.warning("default-mode must be pb, best, next or off; using pb");
             mode = Mode.PB;
         }
         Material material = Material.matchMaterial(cfg.getString("material", ""));

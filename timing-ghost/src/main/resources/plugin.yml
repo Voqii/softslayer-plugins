@@ -9,10 +9,10 @@ commands:
   ttghost:
     description: Choose which ghost you race against.
     aliases: [tghost]
-    usage: /ttghost [off|pb|best]
+    usage: /ttghost [off|pb|best|next]
 permissions:
   timingghost.use:
-    description: See ghosts and use /ttghost off|pb|best.
+    description: See ghosts and use /ttghost off|pb|best|next.
     default: true
   timingghost.admin:
     description: /ttghost clear and /ttghost reload.
