@@ -40,6 +40,9 @@ public final class HeadMark extends JavaPlugin implements Listener {
             .hexColors()
             .build();
 
+    private static final java.util.regex.Pattern VARIATION_SELECTORS =
+            java.util.regex.Pattern.compile("[\\x{FE00}-\\x{FE0F}\\x{E0100}-\\x{E01EF}]");
+
     // worldName -> parsed watermark line
     private final Map<String, Component> watermarks = new LinkedHashMap<>();
     private boolean playerHeadsOnly = true;
@@ -111,6 +114,9 @@ public final class HeadMark extends JavaPlugin implements Listener {
      * italic is switched off here and only &o turns it on, as the config comments promise.
      */
     private Component colorize(String input) {
+        // Strip emoji variation selectors (U+FE00-FE0F, U+E0100-E01EF). Minecraft's font has no glyph
+        // for them, so e.g. "\u2694\uFE0F" renders the sword followed by a dotted "VS16" box.
+        input = VARIATION_SELECTORS.matcher(input).replaceAll("");
         return LEGACY.deserialize(input).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 

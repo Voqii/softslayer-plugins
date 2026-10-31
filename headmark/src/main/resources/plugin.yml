@@ -1,5 +1,5 @@
 name: HeadMark
-version: 1.1.0
+version: 1.1.1
 main: com.voqii.headmark.HeadMark
 api-version: '26.3'
 author: Voqii

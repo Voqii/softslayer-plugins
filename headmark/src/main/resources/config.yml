@@ -8,6 +8,7 @@
 #   - &#RRGGBB  hex colors (e.g. &#9D9D97 = your grey)
 #   - &o italic, &l bold, etc. (standard legacy codes)
 #   - Emoji are fine (your client/resource pack already renders them in LootChest lore).
+#     Emoji variation selectors (U+FE0F, shows as a dotted "VS16" box) are stripped automatically.
 #
 # Use the world's INTERNAL folder/level name (case-sensitive), not its display name.
 
@@ -16,4 +17,4 @@ player-heads-only: true
 
 watermarks:
   world_deathvalley: "&#9D9D97&oDeath Valley 🔥"
-  world_classpvp: "&#9D9D97&oClassPvP ⚔️"
+  world_classpvp: "&#9D9D97&oClassPvP ⚔"
