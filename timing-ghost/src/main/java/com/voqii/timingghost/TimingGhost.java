@@ -27,8 +27,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class TimingGhost extends JavaPlugin implements Listener {
@@ -36,6 +38,9 @@ public final class TimingGhost extends JavaPlugin implements Listener {
     private final Map<UUID, Session> sessions = new HashMap<>();
     // what /ttghost next last told each player ("trackId:ghostOwner"), so every new attempt doesn't repeat it
     private final Map<UUID, String> announcedNext = new HashMap<>();
+    // "trackId/owner" of version 1 ghosts that don't fit their track any more (moved before the ghost had an anchor)
+    private final Set<String> unalignable = new HashSet<>();
+    private final Set<String> toldUnalignable = new HashSet<>();
     private final double[] scratch = new double[4];
     private NamespacedKey modeKey;
     private GhostStore store;
@@ -90,6 +95,11 @@ public final class TimingGhost extends JavaPlugin implements Listener {
             lastElapsed = Long.MIN_VALUE;
             recording = new GhostRecording(track.getId(), player.getUniqueId(), player.getName(),
                     player.getWorld().getName(), track.isBoatTrack(), 20 * 60);
+            // /te move shifts the whole track by how far its spawn moved, so the spawn block is the ghost's anchor.
+            Location spawn = track.getSpawnLocation();
+            if (spawn != null && spawn.getWorld() != null) {
+                recording.setAnchor(spawn.getWorld().getName(), spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ());
+            }
             removeGhost();
             loadGhost();
         }
@@ -110,7 +120,10 @@ public final class TimingGhost extends JavaPlugin implements Listener {
             int forRun = run;
             store.load(track.getId(), owner).thenAccept(rec -> {
                 if (rec != null && rec.size() > 0 && sessions.get(player.getUniqueId()) == this && run == forRun) {
-                    ghost = new GhostRenderer(TimingGhost.this, player, rec);
+                    GhostRenderer.Placement placement = placementFor(rec, track, player);
+                    if (placement != null) {
+                        ghost = new GhostRenderer(TimingGhost.this, player, rec, placement);
+                    }
                 }
             });
         }
@@ -222,7 +235,10 @@ public final class TimingGhost extends JavaPlugin implements Listener {
         rec.add(time, end.getX(), end.getY(), end.getZ(), end.getYaw());
 
         Long previous = store.bestTime(s.track.getId(), player.getUniqueId());
-        if (previous == null || time < previous) {
+        // A ghost that no longer fits its track can't be raced, so any finish replaces it.
+        boolean stale = unalignable.contains(s.track.getId() + "/" + player.getUniqueId());
+        if (previous == null || time < previous || stale) {
+            unalignable.remove(s.track.getId() + "/" + player.getUniqueId());
             for (ProfileProperty p : player.getPlayerProfile().getProperties()) {
                 if (p.getName().equals("textures")) {
                     rec.skinValue = p.getValue();
@@ -245,6 +261,64 @@ public final class TimingGhost extends JavaPlugin implements Listener {
         if (s != null) {
             s.removeGhost();
         }
+    }
+
+    /**
+     * Where to draw a ghost on the track as it is now. Anchored ghosts shift by however far the spawn has moved since
+     * they were recorded. Version 1 ghosts get their shift worked out from the track's regions once, then saved with
+     * an anchor. Null when an old ghost can't be lined up, so it's hidden rather than driving the old location.
+     */
+    private GhostRenderer.Placement placementFor(GhostRecording rec, Track track, Player viewer) {
+        Location spawn = track.getSpawnLocation();
+        if (spawn == null || spawn.getWorld() == null) {
+            return null;
+        }
+        String key = track.getId() + "/" + rec.owner;
+        if (!rec.anchored) {
+            if (unalignable.contains(key)) {
+                tellUnalignable(viewer, rec, track, key);
+                return null;
+            }
+            int[] shift = LegacyAligner.align(rec, track);
+            if (shift == null) {
+                unalignable.add(key);
+                getLogger().warning(rec.ownerName + "'s ghost on " + track.getCommandName()
+                        + " was recorded before the track moved and doesn't fit it any more; hiding it until they finish again");
+                tellUnalignable(viewer, rec, track, key);
+                return null;
+            }
+            rec.setAnchor(rec.world, spawn.getBlockX() - shift[0], spawn.getBlockY() - shift[1], spawn.getBlockZ() - shift[2]);
+            store.save(rec);
+            if (shift[0] != 0 || shift[1] != 0 || shift[2] != 0) {
+                getLogger().info("Moved " + rec.ownerName + "'s ghost on " + track.getCommandName() + " to the track's new spot ("
+                        + shift[0] + ", " + shift[1] + ", " + shift[2] + ")");
+            }
+        }
+        int dx = spawn.getBlockX() - rec.anchorX, dy = spawn.getBlockY() - rec.anchorY, dz = spawn.getBlockZ() - rec.anchorZ;
+        // The spawn also moves on its own with /te spawn. If following it takes the ghost off the track, the track
+        // itself didn't move that far: line the ghost up with the regions instead and re-anchor it.
+        if ((dx != 0 || dy != 0 || dz != 0) && !LegacyAligner.fits(rec, track, dx, dy, dz)) {
+            int[] shift = LegacyAligner.align(rec, track);
+            if (shift != null) {
+                rec.setAnchor(rec.anchorWorld, spawn.getBlockX() - shift[0], spawn.getBlockY() - shift[1], spawn.getBlockZ() - shift[2]);
+                store.save(rec);
+                dx = shift[0];
+                dy = shift[1];
+                dz = shift[2];
+            }
+        }
+        return new GhostRenderer.Placement(spawn.getWorld(), dx, dy, dz);
+    }
+
+    private void tellUnalignable(Player viewer, GhostRecording rec, Track track, String key) {
+        if (!toldUnalignable.add(viewer.getUniqueId() + "/" + key)) {
+            return;
+        }
+        viewer.sendMessage(Component.text(viewer.getUniqueId().equals(rec.owner)
+                ? "Your ghost on " + track.getDisplayName() + " was recorded before the track was moved and doesn't fit it any more,"
+                        + " so it's hidden. Your next finish here records a new one."
+                : rec.ownerName + "'s ghost on " + track.getDisplayName() + " was recorded before the track was moved and can't be shown.",
+                NamedTextColor.GRAY));
     }
 
     private Config.Mode modeOf(Player player) {

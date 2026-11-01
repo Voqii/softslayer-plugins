@@ -53,14 +53,20 @@ final class GhostRenderer {
     private final TimingGhost plugin;
     private final Player viewer;
     private final GhostRecording rec;
+    private final Placement placement;
     private final List<Display> parts = new ArrayList<>();
     private TextDisplay label;
     private double lastX, lastY, lastZ;
 
-    GhostRenderer(TimingGhost plugin, Player viewer, GhostRecording rec) {
+    /** Where a recording is drawn on the track as it is now: the track's world and how far it moved since. */
+    record Placement(World world, double dx, double dy, double dz) {
+    }
+
+    GhostRenderer(TimingGhost plugin, Player viewer, GhostRecording rec, Placement placement) {
         this.plugin = plugin;
         this.viewer = viewer;
         this.rec = rec;
+        this.placement = placement;
     }
 
     GhostRecording recording() {
@@ -69,13 +75,14 @@ final class GhostRenderer {
 
     /** Moves the ghost to where the recording was at this many ms into the run. */
     void showAt(long elapsed, double[] scratch) {
-        World world = Bukkit.getWorld(rec.world);
-        if (world == null || world != viewer.getWorld()) {
+        World world = placement.world();
+        if (world != viewer.getWorld()) {
             remove();
             return;
         }
         rec.sample(elapsed, scratch);
-        Location loc = new Location(world, scratch[0], scratch[1], scratch[2], (float) scratch[3], 0f);
+        Location loc = new Location(world, scratch[0] + placement.dx(), scratch[1] + placement.dy(), scratch[2] + placement.dz(),
+                (float) scratch[3], 0f);
         if (!loc.isChunkLoaded()) {
             return;
         }

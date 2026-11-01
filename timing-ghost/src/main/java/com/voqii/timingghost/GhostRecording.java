@@ -9,11 +9,13 @@ import java.util.UUID;
 /**
  * One recorded run: a position sample per server tick, keyed by milliseconds since the
  * TimingSystem start time, so playback lines up with TimingSystem's own timer.
+ * Positions are absolute; the anchor (the track's spawn block when the run was recorded) is what
+ * lets playback follow the track after a {@code /te move}.
  */
 public final class GhostRecording {
 
     private static final int MAGIC = 0x47485354; // "GHST"
-    private static final int VERSION = 1;
+    private static final int VERSION = 2; // 2 added the anchor; version 1 files still load, unanchored
 
     public final int trackId;
     public final UUID owner;
@@ -23,6 +25,10 @@ public final class GhostRecording {
     public long finishTime; // ms, TimingSystem's finish time; -1 while still recording
     public String skinValue;
     public String skinSignature;
+    // Track spawn block at record time. Version 1 ghosts have none until LegacyAligner works it out.
+    public boolean anchored;
+    public String anchorWorld;
+    public int anchorX, anchorY, anchorZ;
 
     private int size;
     private long[] times;
@@ -46,6 +52,26 @@ public final class GhostRecording {
 
     public int size() {
         return size;
+    }
+
+    public void setAnchor(String world, int x, int y, int z) {
+        anchored = true;
+        anchorWorld = world;
+        anchorX = x;
+        anchorY = y;
+        anchorZ = z;
+    }
+
+    public double x(int i) {
+        return xs[i];
+    }
+
+    public double y(int i) {
+        return ys[i];
+    }
+
+    public double z(int i) {
+        return zs[i];
     }
 
     public void add(long time, double x, double y, double z, float yaw) {
@@ -121,6 +147,13 @@ public final class GhostRecording {
         out.writeLong(finishTime);
         out.writeUTF(skinValue == null ? "" : skinValue);
         out.writeUTF(skinSignature == null ? "" : skinSignature);
+        out.writeBoolean(anchored);
+        if (anchored) {
+            out.writeUTF(anchorWorld);
+            out.writeInt(anchorX);
+            out.writeInt(anchorY);
+            out.writeInt(anchorZ);
+        }
         out.writeInt(size);
         for (int i = 0; i < size; i++) {
             out.writeInt((int) times[i]);
@@ -137,7 +170,7 @@ public final class GhostRecording {
             throw new IOException("not a ghost file");
         }
         int version = in.readInt();
-        if (version != VERSION) {
+        if (version != 1 && version != VERSION) {
             throw new IOException("unknown ghost file version " + version);
         }
         int trackId = in.readInt();
@@ -148,11 +181,17 @@ public final class GhostRecording {
         long finishTime = in.readLong();
         String skinValue = in.readUTF();
         String skinSignature = in.readUTF();
+        boolean anchored = version >= 2 && in.readBoolean();
+        String anchorWorld = anchored ? in.readUTF() : null;
+        int ax = anchored ? in.readInt() : 0, ay = anchored ? in.readInt() : 0, az = anchored ? in.readInt() : 0;
         int n = in.readInt();
         GhostRecording rec = new GhostRecording(trackId, owner, ownerName, world, boat, headerOnly ? 0 : n);
         rec.finishTime = finishTime;
         rec.skinValue = skinValue.isEmpty() ? null : skinValue;
         rec.skinSignature = skinSignature.isEmpty() ? null : skinSignature;
+        if (anchored) {
+            rec.setAnchor(anchorWorld, ax, ay, az);
+        }
         if (!headerOnly) {
             for (int i = 0; i < n; i++) {
                 rec.add(in.readInt(), in.readDouble(), in.readFloat(), in.readDouble(), in.readFloat());

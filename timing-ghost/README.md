@@ -6,6 +6,8 @@ Companion plugin for [TimingSystem](https://github.com/FrostHexABG/TimingSystem)
 - Saves the run when it beats your previous ghost (`plugins/TimingGhost/ghosts/<trackId>/<uuid>.ghost`).
 - Draws the ghost with display entities: a glass boat (or figure) with your head and a name tag. It has no hitbox and never collides with anyone.
 - Works on lap tracks where the start line is the finish (TimingSystem fires no new start event there, so the plugin spots the timer resetting).
+- Follows the track when it's moved with `/te move`, including to another world (1.2.0). Each ghost stores the track's spawn block from when it was recorded, and plays back shifted by however far the spawn has moved since.
+- Ghosts saved before 1.2.0 have no stored spawn. The first time one is raced, the plugin works out how far the track moved by finding the shift that puts the recorded path back through the track's current start, every checkpoint and the finish (to within a block), then saves it so this only happens once. If no shift fits, for example because the track was rebuilt rather than moved, that ghost is hidden instead of driving the old location, the player is told, and their next finish records a new one even if it's slower.
 
 Ghosts only exist for runs set after the plugin is installed. TimingSystem only stores times, not paths.
 
