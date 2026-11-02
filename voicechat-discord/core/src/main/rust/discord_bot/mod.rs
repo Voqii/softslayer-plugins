@@ -70,7 +70,8 @@ enum State {
 }
 
 impl DiscordBot {
-    pub fn new(token: String, vc_id: ChannelId) -> DiscordBot {
+    /// `udp_port`: local UDP port for the voice connection, 0 = random (see songbird's `Config::udp_bind_port`).
+    pub fn new(token: String, vc_id: ChannelId, udp_port: u16) -> DiscordBot {
         let (received_audio_tx, received_audio_rx) = flume::bounded(MAX_AUDIO_BUFFER);
         let (clicks_tx, clicks_rx) = flume::bounded(64);
         DiscordBot {
@@ -79,9 +80,12 @@ impl DiscordBot {
             songbird: {
                 // Decode to the format Simple Voice Chat uses (48 kHz mono, 20 ms frames), so
                 // discord_receive can mix everyone who's talking.
-                let songbird_config = Config::default().decode_mode(DecodeMode::Decode(
-                    DecodeConfig::new(Channels::Mono, SampleRate::Hz48000),
-                ));
+                let songbird_config = Config::default()
+                    .decode_mode(DecodeMode::Decode(DecodeConfig::new(
+                        Channels::Mono,
+                        SampleRate::Hz48000,
+                    )))
+                    .udp_bind_port((udp_port != 0).then_some(udp_port));
                 Songbird::serenity_from_config(songbird_config)
             },
             state: RwLock::new(State::NotLoggedIn),

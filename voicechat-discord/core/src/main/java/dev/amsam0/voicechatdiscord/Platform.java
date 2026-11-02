@@ -34,6 +34,13 @@ public interface Platform {
 
     String getConfigPath();
 
+    /**
+     * The Minecraft server's port, the default local UDP port for Discord voice (it's free: Minecraft uses TCP). 0 = unknown, use a random port.
+     */
+    default int serverPort() {
+        return 0;
+    }
+
     void info(String message);
 
     void warn(String message);

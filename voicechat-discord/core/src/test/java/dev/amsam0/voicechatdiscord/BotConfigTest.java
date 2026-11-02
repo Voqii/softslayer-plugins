@@ -25,7 +25,7 @@ class BotConfigTest {
     @Test
     void botsWithoutAModeWorkLikeUpstream() {
         List<BotConfig> bots = parse(bot("token", "abc", "vc_id", 1234567890123456789L));
-        assertEquals(List.of(new BotConfig("abc", 1234567890123456789L, BotConfig.Mode.PLAYER, null, true)), bots);
+        assertEquals(List.of(new BotConfig("abc", 1234567890123456789L, BotConfig.Mode.PLAYER, null, true, BotConfig.UDP_PORT_SERVER)), bots);
         assertTrue(errors.isEmpty());
     }
 
@@ -61,6 +61,22 @@ class BotConfigTest {
     void namesThatCantBeTypedAsOneWordAreRejected() {
         assertTrue(parse(bot("token", "a", "vc_id", 1L, "mode", "call", "name", "my friends")).isEmpty());
         assertEquals(1, errors.size());
+    }
+
+    @Test
+    void udpPortDefaultsToTheServerPort() {
+        assertEquals(BotConfig.UDP_PORT_SERVER, parse(bot("token", "a", "vc_id", 1L)).get(0).udpPort());
+        assertEquals(25570, parse(bot("token", "a", "vc_id", 1L, "udp_port", 25570)).get(0).udpPort());
+        assertEquals(0, parse(bot("token", "a", "vc_id", 1L, "udp_port", 0)).get(0).udpPort(), "0 = random, like upstream");
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void badUdpPortIsRejected() {
+        assertTrue(parse(bot("token", "a", "vc_id", 1L, "udp_port", 70000)).isEmpty());
+        assertTrue(parse(bot("token", "a", "vc_id", 1L, "udp_port", "auto")).isEmpty());
+        assertEquals(2, errors.size());
+        assertTrue(errors.get(0).contains("udp_port"));
     }
 
     @Test

@@ -51,3 +51,8 @@ branch = "next"
 [dependencies.symphonia]
 version = "0.5.4"
 features = ["pcm"]
+
+# voicechat-discord fork: songbird with a configurable local UDP port for voice (Config::udp_bind_port), for hosts
+# that only let UDP replies in on assigned ports. Vendored from the `next` branch at d2561d7.
+[patch."https://github.com/serenity-rs/songbird"]
+songbird = { path = "vendor/songbird" }

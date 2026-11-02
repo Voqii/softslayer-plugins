@@ -125,6 +125,11 @@ public class PaperPlatform implements Platform {
     }
 
     @Override
+    public int serverPort() {
+        return Bukkit.getPort();
+    }
+
+    @Override
     public void info(String message) {
         LOGGER.info(message);
     }

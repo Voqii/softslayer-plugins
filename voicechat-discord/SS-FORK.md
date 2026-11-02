@@ -1,7 +1,7 @@
 # SoftSlayer fork of Simple Voice Chat Discord Bridge
 
 Fork of [amsam0/voicechat-discord](https://gitlab.com/amsam0/voicechat-discord) 3.2.1 (MIT), branch `call-mode`.
-Version `3.2.1-call.2`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
+Version `3.2.1-call.3`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
 
 ## Why
 
@@ -50,6 +50,14 @@ voice channel. Upstream can't do that well:
    the message into "This request isn't open anymore." `approval: false` on a call bot skips the asking only.
 3. Small fixes: `getBotForPlayer` compared UUIDs with `==`; small `vc_id`s that YAML reads as Integer failed the
    `(Long)` cast (`BotConfig`).
+5. **Voice works on hosts that filter UDP (call.3).** Joining Discord voice failed on SoftSlayer's host with
+   "failed to connect to Discord RTP server: connection attempt timed out": the host only lets UDP replies in on the
+   server's assigned ports, and songbird always used a random local port, so Discord's IP-discovery answer never
+   arrived (proven with a STUN probe: random port no reply, server port reply). Songbird is now vendored
+   (`core/vendor/songbird`, see its `VOQII-PATCH.md`) with `Config::udp_bind_port`, and each bot binds the
+   **Minecraft server's port** by default (free for UDP: Minecraft uses TCP). Per bot `udp_port: <port>` picks
+   another assigned port (each bot needs its own if there are several), `udp_port: 0` = random like upstream. If the
+   port can't be bound, it falls back to a random one with a warning.
 
 Config:
 
