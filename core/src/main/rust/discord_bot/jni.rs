@@ -18,13 +18,18 @@ pub extern "system" fn Java_dev_amsam0_voicechatdiscord_DiscordBot__1new<'local>
     _class: JClass<'local>,
     token: JString<'local>,
     vc_id: jlong,
+    udp_port: jint,
 ) -> jlong {
     let token = env
         .get_string(&token)
         .expect("Couldn't get java string! Please file a GitHub issue")
         .into();
 
-    let discord_bot = DiscordBot::new(token, ChannelId::new(vc_id as u64));
+    let discord_bot = DiscordBot::new(
+        token,
+        ChannelId::new(vc_id as u64),
+        u16::try_from(udp_port).unwrap_or(0),
+    );
     Box::into_raw(Box::new(discord_bot)) as jlong
 }
 

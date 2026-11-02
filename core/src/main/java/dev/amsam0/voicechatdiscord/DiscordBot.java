@@ -69,11 +69,14 @@ public final class DiscordBot implements DiscordVoice, DiscordText {
         sender.whispering(set);
     }
 
-    private static native long _new(String token, long vcId);
+    private static native long _new(String token, long vcId, int udpPort);
 
-    public DiscordBot(String token, long vcId) {
+    /**
+     * @param udpPort local UDP port for the voice connection, 0 = random
+     */
+    public DiscordBot(String token, long vcId, int udpPort) {
         this.vcId = vcId;
-        ptr = _new(token, vcId);
+        ptr = _new(token, vcId, udpPort);
     }
 
     public void logInAndStart(ServerPlayer player) {

@@ -14,8 +14,13 @@ import java.util.function.Consumer;
  * @param mode     {@link Mode#PLAYER} (upstream behaviour, {@code /dvc start}) or {@link Mode#CALL} ({@code /dvc call})
  * @param name     only used by call bots, to pick one with {@code /dvc call <name>}
  * @param approval call bots only: someone in the voice channel has to let each player in (default true)
+ * @param udpPort  local UDP port for the Discord voice connection: {@link #UDP_PORT_SERVER} (default) = the Minecraft
+ *                 server's port, 0 = random (upstream behaviour). Hosts that only let UDP replies in on assigned
+ *                 ports need an assigned one, or joining Discord voice times out.
  */
-public record BotConfig(String token, long vcId, Mode mode, String name, boolean approval) {
+public record BotConfig(String token, long vcId, Mode mode, String name, boolean approval, int udpPort) {
+    public static final int UDP_PORT_SERVER = -1;
+
     public enum Mode {PLAYER, CALL}
 
     /**
@@ -78,7 +83,17 @@ public record BotConfig(String token, long vcId, Mode mode, String name, boolean
                 }
             }
 
-            bots.add(new BotConfig(token, vcId.longValue(), mode, name, approval));
+            int udpPort = UDP_PORT_SERVER;
+            Object udpPortValue = bot.get("udp_port");
+            if (udpPortValue != null) {
+                if (!(udpPortValue instanceof Number port) || port.intValue() < 0 || port.intValue() > 65535) {
+                    error.accept("Failed to load the bot for vc_id " + vcId + ": udp_port must be a port number (0 = random), not `" + udpPortValue + "`.");
+                    continue;
+                }
+                udpPort = port.intValue();
+            }
+
+            bots.add(new BotConfig(token, vcId.longValue(), mode, name, approval, udpPort));
         }
         return bots;
     }

@@ -136,7 +136,8 @@ public final class Core {
         requestsByCall.clear();
 
         for (BotConfig bot : BotConfig.parse(config.getList("bots"), platform::error)) {
-            DiscordBot discordBot = new DiscordBot(bot.token(), bot.vcId());
+            int udpPort = bot.udpPort() == BotConfig.UDP_PORT_SERVER ? platform.serverPort() : bot.udpPort();
+            DiscordBot discordBot = new DiscordBot(bot.token(), bot.vcId(), udpPort);
             if (bot.mode() == BotConfig.Mode.CALL) {
                 String name = bot.name();
                 ExecutorService worker = Executors.newSingleThreadExecutor(r -> daemon(r, "voicechat-discord: Call '" + name + "' connection"));
