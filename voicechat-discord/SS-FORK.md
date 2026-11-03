@@ -1,7 +1,7 @@
 # SoftSlayer fork of Simple Voice Chat Discord Bridge
 
 Fork of [amsam0/voicechat-discord](https://gitlab.com/amsam0/voicechat-discord) 3.2.1 (MIT), branch `call-mode`.
-Version `3.2.1-call.3`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
+Version `3.2.1-call.4`. Only the Paper plugin is built (Fabric/NeoForge are left out of `settings.gradle.kts`).
 
 ## Why
 
@@ -58,6 +58,9 @@ voice channel. Upstream can't do that well:
    **Minecraft server's port** by default (free for UDP: Minecraft uses TCP). Per bot `udp_port: <port>` picks
    another assigned port (each bot needs its own if there are several), `udp_port: 0` = random like upstream. If the
    port can't be bound, it falls back to a random one with a warning.
+   **call.4:** with `enable-query=true` the query listener holds UDP on the server port (production does, for the
+   status bot), so the default port is taken and the random fallback fails the same way. Joining now warns in the
+   console, and the error says which port is taken and to set `udp_port` to a free assigned port.
 
 Config:
 
