@@ -10,6 +10,9 @@ import de.maxhenkel.voicechat.api.packets.SoundPacket;
 import de.maxhenkel.voicechat.api.packets.StaticSoundPacket;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,6 +26,10 @@ public final class DiscordBot implements DiscordVoice, DiscordText {
      * ID for the voice channel the bot is assigned to
      */
     private final long vcId;
+    /**
+     * Local UDP port for the voice connection, 0 = random.
+     */
+    private final int udpPort;
     /**
      * Pointer to Rust struct
      */
@@ -76,11 +83,14 @@ public final class DiscordBot implements DiscordVoice, DiscordText {
      */
     public DiscordBot(String token, long vcId, int udpPort) {
         this.vcId = vcId;
+        this.udpPort = udpPort;
         ptr = _new(token, vcId, udpPort);
     }
 
     public void logInAndStart(ServerPlayer player) {
         this.player = player;
+        String portProblem = udpPortProblem(udpPort);
+        if (portProblem != null) platform.warn(portProblem);
         if (logIn()) {
             start();
         }
@@ -382,14 +392,32 @@ public final class DiscordBot implements DiscordVoice, DiscordText {
 
     // DiscordVoice, used by call mode (CallSession). Player mode above doesn't use these.
 
+    /**
+     * Why the voice port can't be used right now, or null if it's free (or random). Songbird falls back to a random
+     * port then, which hosts that only let UDP in on assigned ports drop, so say so instead of timing out silently.
+     * The usual culprit is the query listener ({@code enable-query}), which takes UDP on the server's own port.
+     */
+    static String udpPortProblem(int port) {
+        if (port <= 0) return null;
+        try (DatagramSocket ignored = new DatagramSocket(new InetSocketAddress(port))) {
+            return null;
+        } catch (IOException e) {
+            return "UDP port " + port + " is already in use (with enable-query in server.properties, the query listener takes "
+                    + "the server port), so Discord voice falls back to a random port, which the host may block. Give this bot "
+                    + "a free assigned port with udp_port in the voicechat-discord config.";
+        }
+    }
+
     @Override
     public String connect() throws Exception {
+        String portProblem = udpPortProblem(udpPort);
+        if (portProblem != null) platform.warn(portProblem);
         try {
             _logIn(ptr);
             return _start(ptr);
-        } catch (Exception e) {
-            throw e;
         } catch (Throwable e) {
+            if (portProblem != null) throw new Exception(portProblem, e);
+            if (e instanceof Exception ex) throw ex;
             throw new Exception(e);
         }
     }
